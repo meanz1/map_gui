@@ -1,3 +1,5 @@
 .vscode/
 build/
 devel/
+src/GUI/node_modules/
+src/GUI/package-lock.json
