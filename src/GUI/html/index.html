@@ -1,0 +1,217 @@
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="../css/index.css" />
+    <script type="text/javascript" src="../js/ssh.js"></script>
+</head>
+
+<body>
+    <header>header</header>
+    <main>
+        <div id="src">
+            <h2>Canvas</h2>
+            <canvas id="canvas"></canvas>
+        </div>
+        <div id="btn">
+            <button id="get_map" onclick="getMap()">Get map</button>
+            <button id="save" onclick="save()">Save</button>
+            <p id="draw">Draw</p>
+            <button id="line" onclick="drawLine()">Line</button>
+            <button id="square" onclick="drawSquare()">Square</button>
+            <button id="eraser" onclick="erase()">Eraser</button>
+            
+        </div>
+
+        <script>
+            
+
+            var canvas = document.getElementById("canvas");
+            var ctx = canvas.getContext("2d");
+
+            canvas.width = 500;
+            canvas.height = 500;
+            var pos = new Array();
+
+            ctx.lineWidth = 1; // 컨버스에 그리는 라인의 두께 설정
+            ctx.strokeStyle = "#006cb7"
+            var drag = false;
+            var stX;
+            var stY;
+            var line = false;
+            var square = false;
+            var cnt = 0;
+
+            canvas.addEventListener("mousedown", function (me) {
+                mDown(me)
+            }, false);
+
+            function mDown(me) {
+                cnt++;
+                stX = me.offsetX; //눌렀을 때 현재 마우스 X좌표를 stX에 담음
+                stY = me.offsetY; //눌렀을 때 현재 마우스 Y좌표를 stY에 담음
+                pos[cnt] = [stX, stY];
+                if (line) {
+                    ctx.beginPath();
+                    ctx.arc(stX, stY, 4, 0, Math.PI*2, true);
+	                ctx.fill();
+                    ctx.closePath();
+
+                    if (cnt == 2) {
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = "rgb(0, 255, 0)";
+                        ctx.beginPath();
+                        ctx.moveTo(pos[1][0], pos[1][1]);
+                        ctx.lineTo(pos[2][0], pos[2][1]);
+                        ctx.stroke();
+                        cnt = 0;
+                    }
+                }
+
+                if (square) {
+                    ctx.beginPath();
+                    ctx.arc(stX, stY, 4, 0, Math.PI*2, true);
+	                ctx.fill();
+                    ctx.closePath();
+
+                    if (cnt == 4) {
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = "rgb(0, 255, 0)";
+                        ctx.beginPath();
+                        ctx.moveTo(pos[1][0], pos[1][1]);
+                        ctx.lineTo(pos[2][0], pos[2][1]);
+                        ctx.moveTo(pos[2][0], pos[2][1]);
+                        ctx.lineTo(pos[3][0], pos[3][1]);
+                        ctx.moveTo(pos[3][0], pos[3][1]);
+                        ctx.lineTo(pos[4][0], pos[4][1]);
+                        ctx.moveTo(pos[4][0], pos[4][1]);
+                        ctx.lineTo(pos[1][0], pos[1][1]);
+                        ctx.stroke();
+                        cnt = 0;
+                    }
+                }
+
+
+                // if (cntLine == 2) {
+                //     console.log("line");
+                //     ctx.lineWidth = 10;
+                //     ctx.strokeStyle = "rgb(0, 255, 0)";
+                //     ctx.beginPath();
+                //     ctx.moveTo(stX, stY);
+                //     ctx.lineTo(me.offsetX, me.offsetY);
+                //     ctx.stroke();
+
+                // }
+                console.log(stX, stY);
+
+            }
+
+            function drawLine() {
+                cnt = 0;
+                line = true;
+                square = false;
+                document.getElementById("line").style.backgroundColor = "blue";
+                document.getElementById("square").style.backgroundColor = "white";
+                document.getElementById("eraser").style.backgroundColor = "white";
+            }
+
+            function drawSquare() {
+                cnt = 0;
+                square = true;
+                line = false;
+                document.getElementById("line").style.backgroundColor = "white";
+                document.getElementById("square").style.backgroundColor = "blue";
+                document.getElementById("eraser").style.backgroundColor = "white";
+            }
+
+            function erase() {
+                square = false;
+                line = false;
+                document.getElementById("line").style.backgroundColor = "white";
+                document.getElementById("square").style.backgroundColor = "white";
+                document.getElementById("eraser").style.backgroundColor = "blue";
+            }
+
+            function test() {
+                square = false;
+                line = false;
+                document.getElementById("line").style.backgroundColor = "white";
+                document.getElementById("square").style.backgroundColor = "white";
+                document.getElementById("test").style.backgroundColor = "blue";
+            }
+
+            function getMap() {
+                var ssh = new chilkat.Ssh();
+
+                // Connect to an SSH server:
+                var hostname;
+                var port;
+
+                // Hostname may be an IP address or hostname:
+                hostname = "192.168.2.2";
+                //port = 22;
+
+                var success = ssh.Connect(hostname);
+                if (success !== true) {
+                    console.log(ssh.LastErrorText);
+                    return;
+                }
+
+                // Wait a max of 5 seconds when reading responses..
+                ssh.IdleTimeoutMs = 5000;
+
+                // Authenticate using login/password:
+                success = ssh.AuthenticatePw("cona","cona");
+                if (success !== true) {
+                    console.log(ssh.LastErrorText);
+                    return;
+                }
+
+                // Once the SSH object is connected and authenticated, we use it
+                // as the underlying transport in our SCP object.
+                var scp = new chilkat.Scp();
+
+                success = scp.UseSsh(ssh);
+                if (success !== true) {
+                    console.log(scp.LastErrorText);
+                    return;
+                }
+
+                var remotePath = "uploads/text/test.txt";
+                var localPath = "/home/bob/test.txt";
+                success = scp.UploadFile(localPath,remotePath);
+                if (success !== true) {
+                    console.log(scp.LastErrorText);
+                    return;
+                }
+
+                // This upload fully specifies the absolute remote path.
+                remotePath = "/home/chilkat/junk/abc/hamlet.xml";
+                localPath = "/home/bob/hamlet.xml";
+                success = scp.UploadFile(localPath,remotePath);
+                if (success !== true) {
+                    console.log(scp.LastErrorText);
+                    return;
+                }
+
+                console.log("SCP upload file success.");
+
+                // Disconnect
+                ssh.Disconnect();
+
+            }
+
+        
+
+
+
+
+
+
+
+        </script>
+    </main>
+    <footer>footer</footer>
+
+</body>
+
+</html>

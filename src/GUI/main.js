@@ -10,7 +10,7 @@ function createWindow() {  // 브라우저 창을 생성
     })
 
     //브라우저창이 읽어 올 파일 위치
-    win.loadFile('./index.html')
+    win.loadFile('./html/index.html')
 }
 
 app.on('ready', createWindow);
