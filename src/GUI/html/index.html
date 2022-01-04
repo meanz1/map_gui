@@ -2,7 +2,9 @@
 
 <head>
     <link rel="stylesheet" type="text/css" href="../css/index.css" />
-    <script type="text/javascript" src="../js/ssh.js"></script>
+    <script type="text/javascript" src="../js/eventemitter2.js"></script>
+    <script type="text/javascript" src="../js/roslib.js"></script>
+    <script type="text/javascript" src="../js/ros3d.js"></script>
 </head>
 
 <body>
@@ -24,7 +26,21 @@
 
         <script>
 
+            var ros = new ROSLIB.Ros({
+                url: 'ws://localhost:9090'
+            });
 
+            ros.on('connection', function () {
+                console.log('Connected to websocket server');
+            })
+
+            ros.on('error', function (error) {
+                console.log('error ros server');
+            })
+
+            ros.on('close', function () {
+                console.log('Connection to websocket server closed');
+            })
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
 
