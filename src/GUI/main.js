@@ -5,7 +5,8 @@ function createWindow() {  // 브라우저 창을 생성
         width: 800,
         height: 600,
         webPreferences: {
-            nodeIntegration: true
+            nodeIntegration: true,
+            contextIsolation: false
         }
     })
 

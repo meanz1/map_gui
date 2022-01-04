@@ -19,11 +19,11 @@
             <button id="line" onclick="drawLine()">Line</button>
             <button id="square" onclick="drawSquare()">Square</button>
             <button id="eraser" onclick="erase()">Eraser</button>
-            
+
         </div>
 
         <script>
-            
+
 
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
@@ -52,8 +52,8 @@
                 pos[cnt] = [stX, stY];
                 if (line) {
                     ctx.beginPath();
-                    ctx.arc(stX, stY, 4, 0, Math.PI*2, true);
-	                ctx.fill();
+                    ctx.arc(stX, stY, 4, 0, Math.PI * 2, true);
+                    ctx.fill();
                     ctx.closePath();
 
                     if (cnt == 2) {
@@ -69,8 +69,8 @@
 
                 if (square) {
                     ctx.beginPath();
-                    ctx.arc(stX, stY, 4, 0, Math.PI*2, true);
-	                ctx.fill();
+                    ctx.arc(stX, stY, 4, 0, Math.PI * 2, true);
+                    ctx.fill();
                     ctx.closePath();
 
                     if (cnt == 4) {
@@ -160,7 +160,7 @@
                 ssh.IdleTimeoutMs = 5000;
 
                 // Authenticate using login/password:
-                success = ssh.AuthenticatePw("cona","cona");
+                success = ssh.AuthenticatePw("cona", "cona");
                 if (success !== true) {
                     console.log(ssh.LastErrorText);
                     return;
@@ -178,7 +178,7 @@
 
                 var remotePath = "uploads/text/test.txt";
                 var localPath = "/home/bob/test.txt";
-                success = scp.UploadFile(localPath,remotePath);
+                success = scp.UploadFile(localPath, remotePath);
                 if (success !== true) {
                     console.log(scp.LastErrorText);
                     return;
@@ -187,7 +187,7 @@
                 // This upload fully specifies the absolute remote path.
                 remotePath = "/home/chilkat/junk/abc/hamlet.xml";
                 localPath = "/home/bob/hamlet.xml";
-                success = scp.UploadFile(localPath,remotePath);
+                success = scp.UploadFile(localPath, remotePath);
                 if (success !== true) {
                     console.log(scp.LastErrorText);
                     return;
@@ -200,7 +200,7 @@
 
             }
 
-        
+
 
 
 
