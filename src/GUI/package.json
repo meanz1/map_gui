@@ -13,6 +13,5 @@
     "electron": "^15.0.0"
   },
   "dependencies": {
-    "@chilkat/ck-node11-linux64": "^9.50.89"
   }
 }
