@@ -5,6 +5,7 @@
     <script type="text/javascript" src="../js/eventemitter2.js"></script>
     <script type="text/javascript" src="../js/roslib.js"></script>
     <script type="text/javascript" src="../js/ros3d.js"></script>
+    <script async src="../js/opencv.js" onload="onOpenCvReady();" type="text/javascipt"></script>
 </head>
 
 <body>
@@ -156,75 +157,24 @@
             }
 
             function getMap() {
-                var ssh = new chilkat.Ssh();
 
-                // Connect to an SSH server:
-                var hostname;
-                var port;
+                let mat = cv.imread("../../map/Map1.pgm");
+                cv.imshow('canvas', mat);
 
-                // Hostname may be an IP address or hostname:
-                hostname = "192.168.2.2";
-                //port = 22;
+            }
 
-                var success = ssh.Connect(hostname);
-                if (success !== true) {
-                    console.log(ssh.LastErrorText);
-                    return;
-                }
 
-                // Wait a max of 5 seconds when reading responses..
-                ssh.IdleTimeoutMs = 5000;
 
-                // Authenticate using login/password:
-                success = ssh.AuthenticatePw("cona", "cona");
-                if (success !== true) {
-                    console.log(ssh.LastErrorText);
-                    return;
-                }
-
-                // Once the SSH object is connected and authenticated, we use it
-                // as the underlying transport in our SCP object.
-                var scp = new chilkat.Scp();
-
-                success = scp.UseSsh(ssh);
-                if (success !== true) {
-                    console.log(scp.LastErrorText);
-                    return;
-                }
-
-                var remotePath = "uploads/text/test.txt";
-                var localPath = "/home/bob/test.txt";
-                success = scp.UploadFile(localPath, remotePath);
-                if (success !== true) {
-                    console.log(scp.LastErrorText);
-                    return;
-                }
-
-                // This upload fully specifies the absolute remote path.
-                remotePath = "/home/chilkat/junk/abc/hamlet.xml";
-                localPath = "/home/bob/hamlet.xml";
-                success = scp.UploadFile(localPath, remotePath);
-                if (success !== true) {
-                    console.log(scp.LastErrorText);
-                    return;
-                }
-
-                console.log("SCP upload file success.");
-
-                // Disconnect
-                ssh.Disconnect();
-
+            function onOpenCvReady() {
+                document.getElementById('save').innerHTML = 'opencv';
             }
 
 
 
 
 
-
-
-
-
         </script>
+
     </main>
     <footer>footer</footer>
 

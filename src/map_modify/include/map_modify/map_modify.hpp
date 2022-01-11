@@ -41,15 +41,18 @@ class MODMAP
         int map_width, map_height;
         PGMImage a;
         float m2pixel;
+
         int readPGM(PGMImage *img);
         void closePGM(PGMImage *img);
         void mapCallback(nav_msgs::OccupancyGridConstPtr map);
+        void readMap();
         char b[10] = "Map1.pgm";
 
         MODMAP()
         {
             initNode();
-            //readPGM(&a);
+            readMap();
+            // readPGM(&a);
         }
 };
 
@@ -58,7 +61,8 @@ void MODMAP::initNode()
     chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
     sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
     ros::Rate loop_rate(10);
-    
+
+    std::cout << "img.width" << std::endl;
     int count = 0;
     while (ros::ok())
     {
@@ -79,6 +83,21 @@ void MODMAP::initNode()
         if (count == 10){
             break;
         }
+
+        
+    }
+}
+
+void MODMAP::readMap() {
+    cv::Mat img = cv::imread("/home/cona/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+
+    if (!img.data){
+        std::cout << "no" << std::endl;
+    }
+    else {
+        cv::namedWindow("image_window");
+        cv::imshow("image_window", img);
+        cv::waitKey(0);
     }
 }
 

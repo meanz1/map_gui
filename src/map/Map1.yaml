@@ -1,8 +1,8 @@
 image: /home/cona/data/CoNA/Map1/Map1.pgm
 resolution: 0.025000
-origin: [-6.302146, -7.286044, 0.000000]
+origin: [-30.818701, -14.174064, 0.000000]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196
-initial_pose: [7.483224, 3.569671, -149.700806]
+initial_pose: [0.000000, 0.000000, 0.000000]
 
