@@ -5,7 +5,7 @@
     <script type="text/javascript" src="../js/eventemitter2.js"></script>
     <script type="text/javascript" src="../js/roslib.js"></script>
     <script type="text/javascript" src="../js/ros3d.js"></script>
-    <script async src="../js/opencv.js" onload="onOpenCvReady();" type="text/javascipt"></script>
+   <!--<script async src="../js/opencv.js" onload="onOpenCvReady();" type="text/javascipt"></script>-->
 </head>
 
 <body>
@@ -42,6 +42,13 @@
             ros.on('close', function () {
                 console.log('Connection to websocket server closed');
             })
+
+            var mapimg = new ROSLIB.Topic({
+                ros: ros,
+                name: "/map_pgm/compressed",
+                messageType: "sensor_msgs/CompressedImage",
+            });
+
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
 
@@ -157,9 +164,22 @@
             }
 
             function getMap() {
+                var readyToSend = new ROSLIB.Topic({
+                    ros: ros,
+                    name: "/ReadyGUI",
+                    messageType: "std_msgs/String",
+                });
 
-                let mat = cv.imread("../../map/Map1.pgm");
-                cv.imshow('canvas', mat);
+                var String_getmap = new ROSLIB.Message({
+                    data: "ready",
+                });
+                readyToSend.publish(String_getmap);
+                console.log("Pub message: ", String_getmap);
+
+                mapimg.subscribe((m) => {
+                    document.getElementById("canvas").src = "data:image/jpg;base64," + m.data;
+                })
+                
 
             }
 
