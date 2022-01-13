@@ -1,4 +1,4 @@
-image: /home/cona/data/CoNA/Map1/Map1.pgm
+image: /home/cona/map_gui/src/map/Map1/Map1.pgm
 resolution: 0.025000
 origin: [-30.818701, -14.174064, 0.000000]
 negate: 0

@@ -7,6 +7,6 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "map_modify");
   MODMAP modmap;
-  std::cout << "finish" << std::endl;
+  ros::spin();
   return 0;
 }

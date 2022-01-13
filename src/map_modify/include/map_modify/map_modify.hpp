@@ -1,6 +1,8 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include <nav_msgs/OccupancyGrid.h>
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 
 #include <sstream>
 #include <cstdio>
@@ -15,6 +17,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <jsoncpp/json/json.h>
+
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/highgui/highgui.hpp>
 
@@ -25,67 +29,45 @@ class MODMAP
 {
     public:
 
-        typedef struct {
-            char M, N;
-            int width;
-            int height;
-            int max;
-            unsigned char **pixels;
-        } PGMImage;
-
         ros::NodeHandle n;
-        ros::Subscriber sub;
-        ros::Publisher chatter_pub;
-        void initNode();
+        image_transport::ImageTransport it;
+        ros::Subscriber sub, sub2, sub3;
+        image_transport::Publisher map_pub;
         cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
         int map_width, map_height;
-        PGMImage a;
+        
         float m2pixel;
 
-        int readPGM(PGMImage *img);
-        void closePGM(PGMImage *img);
+        void initNode();
+       
         void mapCallback(nav_msgs::OccupancyGridConstPtr map);
         void readMap();
-        char b[10] = "Map1.pgm";
+        void btnCallback(const std_msgs::String::ConstPtr& msg);
+        void jsonCallback(const std_msgs::String::ConstPtr &msg);
+        void mapPublish(cv::Mat image);
 
         MODMAP()
+        :it(n)
         {
             initNode();
-            readMap();
+            
+            //readMap();
             // readPGM(&a);
         }
 };
 
 void MODMAP::initNode()
 {
-    chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
     sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
+    sub2 = n.subscribe("/btnInput", 1, &MODMAP::btnCallback, this);
+    sub3 = n.subscribe("/btnInput", 1, &MODMAP::jsonCallback, this);
+    map_pub = it.advertise("map_pgm", 1);
+    
     ros::Rate loop_rate(10);
-
-    std::cout << "img.width" << std::endl;
-    int count = 0;
-    while (ros::ok())
-    {
-        std_msgs::String msg;
-
-        std::stringstream ss;
-        ss << "hello world " << count;
-        msg.data = ss.str();
-
-        ROS_INFO("%s", msg.data.c_str());
-
-        chatter_pub.publish(msg);
-
-        //ros::spinOnce();
-
-        loop_rate.sleep();
-        ++count;
-        if (count == 10){
-            break;
-        }
-
-        
-    }
+    cv::Mat img = cv::imread("/home/cona/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+    
+    
+    
 }
 
 void MODMAP::readMap() {
@@ -98,6 +80,76 @@ void MODMAP::readMap() {
         cv::namedWindow("image_window");
         cv::imshow("image_window", img);
         cv::waitKey(0);
+    }
+}
+
+void MODMAP::btnCallback(const std_msgs::String::ConstPtr& msg)//json
+{
+    std::string button = msg->data;
+    std::cout << button << std::endl;
+    if(button == "get_map")
+    {
+        std::cout << "oh yeah" << std::endl;
+        //mapPublishOnce(Mapimage);
+    }
+    
+    
+}
+
+void MODMAP::mapPublish(cv::Mat image)
+{
+    ros::Time time = ros::Time::now();
+    cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
+
+    cv_ptr->header.frame_id = "";
+    cv_ptr->header.seq = 1;
+    cv_ptr->header.stamp = time;
+    cv_ptr->encoding = "mono8";
+    cv_ptr->image = image;
+
+    map_pub.publish(cv_ptr->toImageMsg());
+    }
+
+void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
+{
+    Json::Value root;
+    Json::Value Position;
+    Json::Reader reader;
+    reader.parse(msg->data, root);
+    std::string type = root["type"].asString(); // get_map
+    std::string width = root["width"].asString(); 
+    std::string height = root["height"].asString();
+    map_width = std::stoi(width);
+    map_height = std::stoi(height);
+    float big_size, small_size, resolution, w, h;
+    cv::Mat img = cv::imread("/home/cona/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+
+    if (img.cols >= img.rows){
+        big_size = img.cols;
+        small_size = img.rows;
+        resolution = map_width / big_size;
+        w = map_width;
+        h = map_height * resolution;
+    }
+    else {
+        big_size = img.rows;
+        small_size = img.cols;
+        resolution = map_height / big_size;
+        w = map_width * resolution;
+        h = map_height;
+    }
+
+    if (type == "get_map"){
+
+        cv::resize(img, img, cv::Size(w, h));
+        std::cout << resolution << std::endl;
+        std::cout << w << std::endl;
+        std::cout << h << std::endl;
+
+        // cv::imshow("a", img);
+        // cv::waitKey(0);
+
+        mapPublish(img);
     }
 }
 
