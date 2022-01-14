@@ -24,15 +24,25 @@ footer {
 }
 
 #canvas {
-   
     margin-left: 30px;
     position: absolute;
-   
 }
 
 #canvas_img {
     position: relative;
     margin-left: 30px;
+}
+
+
+#mini_can {
+    margin-top: 50px;
+    position: absolute;
+    z-index: 1;   
+}
+
+#mini_can_img {
+    position: relative;
+    margin-top: 50px;
 }
 
 

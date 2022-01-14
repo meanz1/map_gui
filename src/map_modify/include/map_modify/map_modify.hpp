@@ -3,6 +3,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
+#include "std_msgs/Float32MultiArray.h"
 
 #include <sstream>
 #include <cstdio>
@@ -22,38 +23,38 @@
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/highgui/highgui.hpp>
 
-#define TRUE	1
-#define FALSE	0
+#define TRUE 1
+#define FALSE 0
 
 class MODMAP
 {
-    public:
+public:
+    ros::NodeHandle n;
+    image_transport::ImageTransport it;
+    ros::Subscriber sub, sub2, sub3;
+    ros::Publisher pub_pgmsize;
+    image_transport::Publisher map_pub;
+    cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
+    int map_width, map_height;
 
-        ros::NodeHandle n;
-        image_transport::ImageTransport it;
-        ros::Subscriber sub, sub2, sub3;
-        image_transport::Publisher map_pub;
-        cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
-        int map_width, map_height;
-        
-        float m2pixel;
+    float m2pixel;
 
-        void initNode();
-       
-        void mapCallback(nav_msgs::OccupancyGridConstPtr map);
-        void readMap();
-        void btnCallback(const std_msgs::String::ConstPtr& msg);
-        void jsonCallback(const std_msgs::String::ConstPtr &msg);
-        void mapPublish(cv::Mat image);
+    void initNode();
 
-        MODMAP()
-        :it(n)
-        {
-            initNode();
-            
-            //readMap();
-            // readPGM(&a);
-        }
+    void mapCallback(nav_msgs::OccupancyGridConstPtr map);
+    void readMap();
+    void btnCallback(const std_msgs::String::ConstPtr &msg);
+    void jsonCallback(const std_msgs::String::ConstPtr &msg);
+    void mapPublish(cv::Mat image);
+
+    MODMAP()
+        : it(n)
+    {
+        initNode();
+
+        // readMap();
+        //  readPGM(&a);
+    }
 };
 
 void MODMAP::initNode()
@@ -62,38 +63,36 @@ void MODMAP::initNode()
     sub2 = n.subscribe("/btnInput", 1, &MODMAP::btnCallback, this);
     sub3 = n.subscribe("/btnInput", 1, &MODMAP::jsonCallback, this);
     map_pub = it.advertise("map_pgm", 1);
-    
+
     ros::Rate loop_rate(10);
-    cv::Mat img = cv::imread("/home/cona/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
-    
-    
-    
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
 }
 
-void MODMAP::readMap() {
-    cv::Mat img = cv::imread("/home/cona/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+void MODMAP::readMap()
+{
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
 
-    if (!img.data){
+    if (!img.data)
+    {
         std::cout << "no" << std::endl;
     }
-    else {
+    else
+    {
         cv::namedWindow("image_window");
         cv::imshow("image_window", img);
         cv::waitKey(0);
     }
 }
 
-void MODMAP::btnCallback(const std_msgs::String::ConstPtr& msg)//json
+void MODMAP::btnCallback(const std_msgs::String::ConstPtr &msg) // json
 {
     std::string button = msg->data;
     std::cout << button << std::endl;
-    if(button == "get_map")
+    if (button == "get_map")
     {
         std::cout << "oh yeah" << std::endl;
-        //mapPublishOnce(Mapimage);
+        // mapPublishOnce(Mapimage);
     }
-    
-    
 }
 
 void MODMAP::mapPublish(cv::Mat image)
@@ -108,7 +107,7 @@ void MODMAP::mapPublish(cv::Mat image)
     cv_ptr->image = image;
 
     map_pub.publish(cv_ptr->toImageMsg());
-    }
+}
 
 void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 {
@@ -117,30 +116,40 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     Json::Reader reader;
     reader.parse(msg->data, root);
     std::string type = root["type"].asString(); // get_map
-    std::string width = root["width"].asString(); 
+    std::string width = root["width"].asString();
     std::string height = root["height"].asString();
     map_width = std::stoi(width);
     map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
-    cv::Mat img = cv::imread("/home/cona/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
 
-    if (img.cols >= img.rows){
+    if (img.cols >= img.rows)
+    {
         big_size = img.cols;
         small_size = img.rows;
         resolution = map_width / big_size;
         w = map_width;
         h = map_height * resolution;
     }
-    else {
+    else
+    {
         big_size = img.rows;
         small_size = img.cols;
         resolution = map_height / big_size;
         w = map_width * resolution;
         h = map_height;
     }
+    pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
+    std_msgs::Float32MultiArray mapsize;
+    mapsize.data.clear();
 
-    if (type == "get_map"){
-
+    if (type == "get_map")
+    {
+        mapsize.data.push_back(w);
+        mapsize.data.push_back(h);
+        mapsize.data.push_back(resolution);
+        std::cout << mapsize << std::endl;
+        pub_pgmsize.publish(mapsize);
         cv::resize(img, img, cv::Size(w, h));
         std::cout << resolution << std::endl;
         std::cout << w << std::endl;
@@ -173,15 +182,15 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 // 		fprintf(stderr, "올바른 이미지 포멧이 아닙니다.\n");
 //         return FALSE;
 //     }
- 
+
 //     // <-- 메모리 할당
 //     img->pixels = (unsigned char**)calloc(img->height, sizeof(unsigned char*));
- 
+
 //     for(int i=0; i<img->height; i++){
 //         img->pixels[i] = (unsigned char*)calloc(img->width, sizeof(unsigned char));
 //     }
 //     // -->
- 
+
 //     // <-- pbm 파일로부터 픽셀값을 읽어서 할당한 메모리에 load
 //     int tmp;
 //     for(int i=0; i<img->height; i++){
@@ -194,10 +203,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 //             img->pixels[i][j] = (unsigned char)tmp;
 //         }
 //     }
-    
 
 //     fclose(fp); // 더 이상 사용하지 않는 파일을 닫아 줌
-    
+
 //     return TRUE;
 // }
 
@@ -230,14 +238,14 @@ void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
             }
             else if (map->data[j * (int)map->info.width + i] == 100)
             {
-                init_image.at<cv::Vec3b>(j, i)[0] = 0; //0
+                init_image.at<cv::Vec3b>(j, i)[0] = 0; // 0
                 init_image.at<cv::Vec3b>(j, i)[1] = 0;
                 init_image.at<cv::Vec3b>(j, i)[2] = 0;
             }
             else
             {
-                init_image.at<cv::Vec3b>(j, i)[0] = 127; //127s
-                init_image.at<cv::Vec3b>(j, i)[1] = 127; 
+                init_image.at<cv::Vec3b>(j, i)[0] = 127; // 127s
+                init_image.at<cv::Vec3b>(j, i)[1] = 127;
                 init_image.at<cv::Vec3b>(j, i)[2] = 127;
             }
         }

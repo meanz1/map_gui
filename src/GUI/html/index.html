@@ -23,6 +23,11 @@
             <button id="line" onclick="drawLine()">Line</button>
             <button id="square" onclick="drawSquare()">Square</button>
             <button id="eraser" onclick="erase()">Eraser</button>
+            <div id="map">
+                <canvas id="mini_can"></canvas>
+                <img id="mini_can_img"></img>
+            </div>
+
 
         </div>
 
@@ -50,15 +55,25 @@
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
 
+            var mini_can = document.getElementById("mini_can");
+            var mini_ctx = mini_can.getContext("2d");
+
             canvas.width = 500;
             canvas.height = 500;
+
+            mini_can.width = 200;
+            mini_can.height = 200;
+            var resolution;
             var pos = new Array();
 
             ctx.lineWidth = 1; // 컨버스에 그리는 라인의 두께 설정
-            ctx.strokeStyle = "#006cb7"
+            ctx.strokeStyle = "#006cb7";
+
+            mini_ctx.lineWidth = 1;
+            mini_ctx.strokeStyle = "#006cb7";
             var drag = false;
-            var stX;
-            var stY;
+            var stX, stY;
+            var miniX, miniY, mapX, mapY;
             var line = false;
             var square = false;
             var cnt = 0;
@@ -69,15 +84,45 @@
                 messageType: "sensor_msgs/CompressedImage",
             });
 
+            var mapsize = new ROSLIB.Topic({
+                ros: ros,
+                name: "/mapsize",
+                messageType: "std_msgs/Float32MultiArray",
+            })
+
+            var mapPos = new ROSLIB.Topic({
+                ros: ros,
+                name: "/mappos",
+                messageType: "std_msgs/String",
+            })
+
+            var mapBig = new ROSLIB.Topic({
+                ros: ros,
+                name: "/se",
+                messageType: "sensor_msgs/CompressedImage",
+            })
             mapimg.subscribe((m) => {
                 console.log("hell");
-                document.getElementById("canvas_img").src = "data:image/jpg;base64," + m.data;
+                document.getElementById("mini_can_img").src = "data:image/jpg;base64," + m.data;
             });
 
+            mapsize.subscribe((m) => {
+                mini_can.width = m.data[0];
+                mini_can.height = m.data[1];
+                resolution = m.data[2];
+
+            })
 
             canvas.addEventListener("mousedown", function (me) {
                 mDown(me)
             }, false);
+
+            mini_can.addEventListener("mousedown", function (me) {
+                mDown_mini(me)
+            }, false);
+
+
+
 
             function mDown(me) {
                 document.getElementById("canvas").style.zIndex = 1;
@@ -124,19 +169,35 @@
                         cnt = 0;
                     }
                 }
-
-
-                // if (cntLine == 2) {
-                //     console.log("line");
-                //     ctx.lineWidth = 10;
-                //     ctx.strokeStyle = "rgb(0, 255, 0)";
-                //     ctx.beginPath();
-                //     ctx.moveTo(stX, stY);
-                //     ctx.lineTo(me.offsetX, me.offsetY);
-                //     ctx.stroke();
-
-                // }
                 console.log(stX, stY);
+
+            }
+
+
+            function mDown_mini(me) {
+
+                document.getElementById("mini_can").style.zIndex = 1;
+                miniX = me.offsetX;
+                miniY = me.offsetY;
+                mini_ctx.fillStyle = 'blue';
+                mini_ctx.beginPath();
+                mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                mini_ctx.fill();
+                mini_ctx.closePath();
+
+                mapX = miniX * resolution;
+                mapY = miniY * resolution;
+
+                const mapMsg = {
+                    x: mapX,
+                    y: mapY,
+                }
+                var msg_map = JSON.stringify(mapMsg)
+                var String_map = new ROSLIB.Message({
+                    data: msg_map,
+                });
+
+                mapPos.publish(String_map);
 
             }
 
