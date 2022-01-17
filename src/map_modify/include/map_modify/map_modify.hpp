@@ -31,11 +31,12 @@ class MODMAP
 public:
     ros::NodeHandle n;
     image_transport::ImageTransport it;
-    ros::Subscriber sub, sub2, sub3;
+    ros::Subscriber sub, sub2, sub3, sub4;
     ros::Publisher pub_pgmsize;
-    image_transport::Publisher map_pub;
+    image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     int map_width, map_height;
+    float map_x, map_y;
 
     float m2pixel;
 
@@ -46,6 +47,7 @@ public:
     void btnCallback(const std_msgs::String::ConstPtr &msg);
     void jsonCallback(const std_msgs::String::ConstPtr &msg);
     void mapPublish(cv::Mat image);
+    void mapBigPublish(cv::Mat image);
 
     MODMAP()
         : it(n)
@@ -62,7 +64,9 @@ void MODMAP::initNode()
     sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
     sub2 = n.subscribe("/btnInput", 1, &MODMAP::btnCallback, this);
     sub3 = n.subscribe("/btnInput", 1, &MODMAP::jsonCallback, this);
+    sub4 = n.subscribe("/mappos", 1, &MODMAP::jsonCallback, this);
     map_pub = it.advertise("map_pgm", 1);
+    map_pub_big = it.advertise("map_big", 1);
 
     ros::Rate loop_rate(10);
     cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
@@ -109,6 +113,20 @@ void MODMAP::mapPublish(cv::Mat image)
     map_pub.publish(cv_ptr->toImageMsg());
 }
 
+void MODMAP::mapBigPublish(cv::Mat image)
+{
+    ros::Time time = ros::Time::now();
+    cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
+
+    cv_ptr->header.frame_id = "";
+    cv_ptr->header.seq = 1;
+    cv_ptr->header.stamp = time;
+    cv_ptr->encoding = "mono8";
+    cv_ptr->image = image;
+
+    map_pub_big.publish(cv_ptr->toImageMsg());
+}
+
 void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 {
     Json::Value root;
@@ -118,10 +136,17 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     std::string type = root["type"].asString(); // get_map
     std::string width = root["width"].asString();
     std::string height = root["height"].asString();
+    std::string x_ = root["x"].asString();
+    std::string y_ = root["y"].asString();
+
+    map_x = std::stof(x_); //수정해야함
+    map_y = std::stof(y_);
     map_width = std::stoi(width);
     map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
     cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img_roi;
+    img_roi = img(cv::Rect(map_x - 5, map_y - 5, 10, 10));
 
     if (img.cols >= img.rows)
     {
@@ -129,19 +154,18 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         small_size = img.rows;
         resolution = map_width / big_size;
         w = map_width;
-        h = map_height * resolution;
+        h = small_size * resolution;
     }
     else
     {
         big_size = img.rows;
         small_size = img.cols;
         resolution = map_height / big_size;
-        w = map_width * resolution;
+        w = big_size * resolution;
         h = map_height;
     }
     pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
     std_msgs::Float32MultiArray mapsize;
-    mapsize.data.clear();
 
     if (type == "get_map")
     {
@@ -155,68 +179,17 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         std::cout << w << std::endl;
         std::cout << h << std::endl;
 
-        // cv::imshow("a", img);
-        // cv::waitKey(0);
-
         mapPublish(img);
     }
+
+    if (type == "map_draw")
+    {
+
+        std::cout << "big pub" << std::endl;
+        mapBigPublish(img_roi);
+        std::cout << "big pub" << std::endl;
+    }
 }
-
-// int MODMAP::readPGM(PGMImage *img){
-//     ros::Rate loop_rate(10);
-//     FILE* fp = fopen("/home/cona/map_gui/src/map/Map1.pgm", "r");
-//     if(fp == NULL){
-// 		fprintf(stderr, "파일을 열 수 없습니다 : %s\n", "Map1.pgm");
-// 		return FALSE;
-// 	}
-//     fscanf(fp, "%c %c", &img->M    , &img->N     );   // 매직넘버 읽기
-//     if(img->M != 'P' || img->N != '5'){
-// 		fprintf(stderr, "PGM 이미지 포멧이 아닙니다 : %c%c\n", img->M, img->N);
-// 		return FALSE;
-// 	}
-
-//     fscanf(fp, "%d %d", &img->width, &img->height);   // 가로, 세로 읽기
-//     fscanf(fp, "%d"   , &img->max                );	// 최대명암도 값
-
-// 	if(img->max != 255){
-// 		fprintf(stderr, "올바른 이미지 포멧이 아닙니다.\n");
-//         return FALSE;
-//     }
-
-//     // <-- 메모리 할당
-//     img->pixels = (unsigned char**)calloc(img->height, sizeof(unsigned char*));
-
-//     for(int i=0; i<img->height; i++){
-//         img->pixels[i] = (unsigned char*)calloc(img->width, sizeof(unsigned char));
-//     }
-//     // -->
-
-//     // <-- pbm 파일로부터 픽셀값을 읽어서 할당한 메모리에 load
-//     int tmp;
-//     for(int i=0; i<img->height; i++){
-//         for(int j=0; j<img->width; j++){
-//             fscanf(fp, "%d", &tmp);
-//             if (tmp != 0){
-//                 printf((const char*)tmp);
-//             }
-//             std::cout << tmp << std::endl;
-//             img->pixels[i][j] = (unsigned char)tmp;
-//         }
-//     }
-
-//     fclose(fp); // 더 이상 사용하지 않는 파일을 닫아 줌
-
-//     return TRUE;
-// }
-
-// void MODMAP::closePGM(PGMImage* img)
-// {
-// 	for(int i=0; i<img->height; i++){
-// 		free(img->pixels[i]);
-// 	}
-
-// 	free(img->pixels);
-// }
 
 void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
 {

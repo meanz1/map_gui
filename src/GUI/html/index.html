@@ -49,9 +49,6 @@
                 console.log('Connection to websocket server closed');
             })
 
-
-
-
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
 
@@ -65,6 +62,7 @@
             mini_can.height = 200;
             var resolution;
             var pos = new Array();
+            var miniarray = new Array();
 
             ctx.lineWidth = 1; // 컨버스에 그리는 라인의 두께 설정
             ctx.strokeStyle = "#006cb7";
@@ -98,15 +96,21 @@
 
             var mapBig = new ROSLIB.Topic({
                 ros: ros,
-                name: "/se",
+                name: "/map_big/compressed",
                 messageType: "sensor_msgs/CompressedImage",
             })
             mapimg.subscribe((m) => {
                 console.log("hell");
                 document.getElementById("mini_can_img").src = "data:image/jpg;base64," + m.data;
             });
+            mapBig.subscribe((m) => {
+                console.log("map_big");
+                document.getElementById("canvas_img").src = "data:image/jpg;base64," + m.data;
+            });
 
             mapsize.subscribe((m) => {
+                miniarray[0] = m.data[0];
+                miniarray[1] = m.data[1];
                 mini_can.width = m.data[0];
                 mini_can.height = m.data[1];
                 resolution = m.data[2];
@@ -125,6 +129,8 @@
 
 
             function mDown(me) {
+                mini_can.width = miniarray[0];
+                mini_can.height = miniarray[1];
                 document.getElementById("canvas").style.zIndex = 1;
                 cnt++;
                 stX = me.offsetX; //눌렀을 때 현재 마우스 X좌표를 stX에 담음
@@ -175,7 +181,8 @@
 
 
             function mDown_mini(me) {
-
+                mini_can.width = miniarray[0];
+                mini_can.height = miniarray[1];
                 document.getElementById("mini_can").style.zIndex = 1;
                 miniX = me.offsetX;
                 miniY = me.offsetY;
@@ -185,10 +192,14 @@
                 mini_ctx.fill();
                 mini_ctx.closePath();
 
-                mapX = miniX * resolution;
-                mapY = miniY * resolution;
+                mapX = miniX / resolution;
+                mapY = miniY / resolution;
+                console.log(mapX);
 
                 const mapMsg = {
+                    type: "map_draw",
+                    width: canvas.width,
+                    height: canvas.height,
                     x: mapX,
                     y: mapY,
                 }
@@ -198,6 +209,7 @@
                 });
 
                 mapPos.publish(String_map);
+                console.log("Pub message: ", String_map);
 
             }
 
@@ -247,6 +259,8 @@
                         type: mode,
                         width: canvas.width,
                         height: canvas.height,
+                        x: 10,
+                        y: 10,
                     }
                     var messages_str = JSON.stringify(messages)
                     var String_getmap = new ROSLIB.Message({
