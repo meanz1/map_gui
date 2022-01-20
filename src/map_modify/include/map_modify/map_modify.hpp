@@ -36,7 +36,7 @@ public:
     image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     int map_width, map_height;
-    float map_x, map_y;
+    int map_x, map_y;
 
     float m2pixel;
 
@@ -44,6 +44,7 @@ public:
 
     void mapCallback(nav_msgs::OccupancyGridConstPtr map);
     void readMap();
+    // void mapViewCallback()
     void btnCallback(const std_msgs::String::ConstPtr &msg);
     void jsonCallback(const std_msgs::String::ConstPtr &msg);
     void mapPublish(cv::Mat image);
@@ -134,35 +135,38 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     Json::Reader reader;
     reader.parse(msg->data, root);
     std::string type = root["type"].asString(); // get_map
-    std::string width = root["width"].asString();
-    std::string height = root["height"].asString();
-    std::string x_ = root["x"].asString();
-    std::string y_ = root["y"].asString();
+    int width = root["width"].asInt();
+    int height = root["height"].asInt();
+    int x = root["x"].asInt();
+    int y = root["y"].asInt();
 
-    map_x = std::stof(x_); //수정해야함
-    map_y = std::stof(y_);
-    map_width = std::stoi(width);
-    map_height = std::stoi(height);
+    // std::vector<std::string> x_split = split(x_, '.');
+    // std::vector<std::string> y_split = split(y_, '.');
+
+    // map_x = std::stoi(x); //수정해야함
+    // map_y = std::stoi(y);
+    // map_width = std::stoi(width);
+    // map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
     cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img_origin = img.clone();
     cv::Mat img_roi;
-    img_roi = img(cv::Rect(map_x - 5, map_y - 5, 10, 10));
 
     if (img.cols >= img.rows)
     {
         big_size = img.cols;
         small_size = img.rows;
-        resolution = map_width / big_size;
-        w = map_width;
+        resolution = width / big_size;
+        w = width;
         h = small_size * resolution;
     }
     else
     {
         big_size = img.rows;
         small_size = img.cols;
-        resolution = map_height / big_size;
+        resolution = height / big_size;
         w = big_size * resolution;
-        h = map_height;
+        h = height;
     }
     pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
     std_msgs::Float32MultiArray mapsize;
@@ -174,20 +178,32 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         mapsize.data.push_back(resolution);
         std::cout << mapsize << std::endl;
         pub_pgmsize.publish(mapsize);
-        cv::resize(img, img, cv::Size(w, h));
+        cv::resize(img_origin, img_origin, cv::Size(w, h));
         std::cout << resolution << std::endl;
         std::cout << w << std::endl;
         std::cout << h << std::endl;
 
-        mapPublish(img);
+        mapPublish(img_origin);
     }
 
     if (type == "map_draw")
     {
+        int er = 0;
+        try
+        {
+            er = 5;
+            img_roi = img(cv::Rect(x, y, 200, 200));
+            if (x + 200 > img.cols || y + 200 > img.rows)
+            {
+                throw er;
+            }
 
-        std::cout << "big pub" << std::endl;
-        mapBigPublish(img_roi);
-        std::cout << "big pub" << std::endl;
+            mapBigPublish(img_roi);
+        }
+        catch (int er)
+        {
+            std::cout << er << std::endl;
+        }
     }
 }
 

@@ -55,11 +55,11 @@
             var mini_can = document.getElementById("mini_can");
             var mini_ctx = mini_can.getContext("2d");
 
-            canvas.width = 500;
-            canvas.height = 500;
+            canvas.width = 400;
+            canvas.height = 400;
 
-            mini_can.width = 200;
-            mini_can.height = 200;
+            mini_can.width = 400;
+            mini_can.height = 400;
             var resolution;
             var pos = new Array();
             var miniarray = new Array();
@@ -194,6 +194,8 @@
 
                 mapX = miniX / resolution;
                 mapY = miniY / resolution;
+                mapX = parseInt(mapX);
+                mapY = parseInt(mapY);
                 console.log(mapX);
 
                 const mapMsg = {
@@ -257,8 +259,8 @@
                 if (mode == 'get_map') {
                     const messages = {
                         type: mode,
-                        width: canvas.width,
-                        height: canvas.height,
+                        width: mini_can.width,
+                        height: mini_can.height,
                         x: 10,
                         y: 10,
                     }
@@ -269,8 +271,6 @@
 
                     ros_func.publish(String_getmap);
                     console.log("Pub message: ", String_getmap);
-
-
                 }
 
                 if (mode == 'save') {
@@ -278,29 +278,13 @@
 
 
                 }
-
-
-
-
-
-
-
-
-
             }
-
-
-
-
-
-
-
 
 
         </script>
 
     </main>
-    <footer>footer</footer>
+
 
 </body>
 

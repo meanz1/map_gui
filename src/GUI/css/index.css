@@ -18,14 +18,11 @@ main {
 main h2 {
     margin-left: 30px;
 }
-footer {
-    height: 15%;
-    background-color: rgb(235, 219, 213);
-}
 
 #canvas {
     margin-left: 30px;
     position: absolute;
+    z-index: 1;   
 }
 
 #canvas_img {
