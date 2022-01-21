@@ -38,6 +38,8 @@ public:
     int map_width, map_height;
     int map_x, map_y;
 
+    std::vector<cv::Point> pointList; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
+
     float m2pixel;
 
     void initNode();
@@ -192,8 +194,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         try
         {
             er = 5;
-            img_roi = img(cv::Rect(x, y, 200, 200));
-            if (x + 200 > img.cols || y + 200 > img.rows)
+            img_roi = img(cv::Rect(x, y, 40, 40));
+            cv::resize(img_roi, img_roi, cv::Size(400, 400));
+            if (x + 40 > img.cols || y + 40 > img.rows)
             {
                 throw er;
             }

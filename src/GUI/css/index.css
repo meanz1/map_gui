@@ -42,12 +42,23 @@ main h2 {
     margin-top: 50px;
 }
 
-
 #src {
     width: 65%;
+    display: flex;
+   
 }
 
-#btn {
+#main_can {
+    margin-top: 50px;
+}
+
+#map_size {
+    margin-top: 50px;
+    margin-left: 50px;
+
+}
+
+#btn {         
     width: 35%;
     display: flex;
     flex-direction: column;

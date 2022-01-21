@@ -13,8 +13,16 @@
     <main>
         <div id="src">
             <h2>Canvas</h2>
-            <canvas id="canvas"></canvas>
-            <img id="canvas_img"></img>
+            <div id="main_can">
+                <canvas id="canvas"></canvas>
+                <img id="canvas_img"></img>
+            </div>
+
+            <div id="map_size">
+                <button id="plus">+</button>
+                <button id="minus">-</button>
+            </div>
+
         </div>
         <div id="btn">
             <button id="get_map" onclick="btn_func(this.id)">Get map</button>
@@ -190,12 +198,16 @@
                 mini_ctx.beginPath();
                 mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
                 mini_ctx.fill();
+
+                mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
                 mini_ctx.closePath();
 
-                mapX = miniX / resolution;
-                mapY = miniY / resolution;
+                mapX = (miniX) / resolution;
+                mapY = (miniY) / resolution;
                 mapX = parseInt(mapX);
                 mapY = parseInt(mapY);
+                mapX = mapX - 20;
+                mapY = mapY - 20;
                 console.log(mapX);
 
                 const mapMsg = {
