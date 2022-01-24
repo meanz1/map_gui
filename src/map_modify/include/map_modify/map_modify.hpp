@@ -41,8 +41,11 @@ public:
     std::vector<cv::Point> pointList; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
 
     float m2pixel;
-
+    int a = 10;
+    int b = 10;
     void initNode();
+
+    int roi_x, roi_y, roi_width, roi_height;
 
     void mapCallback(nav_msgs::OccupancyGridConstPtr map);
     void readMap();
@@ -72,12 +75,12 @@ void MODMAP::initNode()
     map_pub_big = it.advertise("map_big", 1);
 
     ros::Rate loop_rate(10);
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_UNCHANGED);
 }
 
 void MODMAP::readMap()
 {
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_UNCHANGED);
 
     if (!img.data)
     {
@@ -150,10 +153,14 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     // map_width = std::stoi(width);
     // map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/map/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_UNCHANGED);
     cv::Mat img_origin = img.clone();
     cv::Mat img_roi;
 
+    // cv::Point left_top(x, y);
+    // cv::Point left_bottom(x, y + 40);
+    // cv::Point right_top(x + 40, y);
+    // cv::Point right_bottom(x + 40, y + 40);
     if (img.cols >= img.rows)
     {
         big_size = img.cols;
@@ -161,20 +168,23 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         resolution = width / big_size;
         w = width;
         h = small_size * resolution;
+        std::cout << "first" << std::endl;
     }
     else
     {
         big_size = img.rows;
         small_size = img.cols;
         resolution = height / big_size;
-        w = big_size * resolution;
+        w = small_size * resolution;
         h = height;
+        std::cout << "second" << std::endl;
     }
     pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
     std_msgs::Float32MultiArray mapsize;
 
     if (type == "get_map")
     {
+
         mapsize.data.push_back(w);
         mapsize.data.push_back(h);
         mapsize.data.push_back(resolution);
@@ -191,11 +201,18 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     if (type == "map_draw")
     {
         int er = 0;
+        a = 10;
+        b = 10;
+
         try
         {
             er = 5;
             img_roi = img(cv::Rect(x, y, 40, 40));
             cv::resize(img_roi, img_roi, cv::Size(400, 400));
+            roi_x = x;
+            roi_y = y;
+            roi_height = 40;
+            roi_width = 40;
             if (x + 40 > img.cols || y + 40 > img.rows)
             {
                 throw er;
@@ -208,6 +225,111 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             std::cout << er << std::endl;
         }
     }
+
+    if (type == "plus" || type == "minus")
+    {
+
+        int er = 0;
+        if (type == "plus")
+        {
+            try
+            {
+                roi_x = roi_x + 10;
+                roi_y = roi_y + 10;
+                roi_height = roi_height - 2 * a;
+                roi_width = roi_width - 2 * a;
+                b = 10;
+                er = 7;
+                img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+                cv::resize(img_roi, img_roi, cv::Size(400, 400));
+                if (roi_x + 40 - a > img.cols || roi_y + 40 - a > img.rows)
+                {
+                    throw er;
+                }
+
+                mapBigPublish(img_roi);
+                // a += 10;
+
+                std::cout << roi_x << std::endl;
+            }
+            catch (int er)
+            {
+                std::cout << er << std::endl;
+            }
+        }
+
+        if (type == "minus")
+        {
+            try
+            {
+                roi_x = roi_x - 10;
+                roi_y = roi_y - 10;
+                roi_height = roi_height + 2 * b;
+                roi_width = roi_width + 2 * b;
+                a = 10;
+                er = 9;
+                img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+                cv::resize(img_roi, img_roi, cv::Size(400, 400));
+                if (roi_x + 40 + b > img.cols || roi_y + 40 + b > img.rows)
+                {
+                    throw er;
+                }
+                std::cout << roi_x << std::endl;
+                mapBigPublish(img_roi);
+                // b += 10;
+            }
+            catch (int er)
+            {
+                std::cout << er << std::endl;
+            }
+        }
+    }
+
+    // if (type == "plus")
+    // {
+    //     int er = 0;
+
+    //     try
+    //     {
+    //         er = 7;
+    //         img_roi = img(cv::Rect(x, y, 40 - a, 40 - a));
+    //         cv::resize(img_roi, img_roi, cv::Size(400, 400));
+    //         if (x + 40 - a > img.cols || y + 40 - a > img.rows)
+    //         {
+    //             throw er;
+    //         }
+
+    //         mapBigPublish(img_roi);
+    //         a = a - 20;
+    //     }
+    //     catch (int er)
+    //     {
+    //         std::cout << er << std::endl;
+    //     }
+    // }
+
+    // if (type == "minus")
+    // {
+    //     int er = 0;
+
+    //     try
+    //     {
+    //         er = 7;
+    //         img_roi = img(cv::Rect(x, y, 40 + a, 40 + a));
+    //         cv::resize(img_roi, img_roi, cv::Size(400, 400));
+    //         if (x + 40 + a > img.cols || y + 40 + a > img.rows)
+    //         {
+    //             throw er;
+    //         }
+
+    //         mapBigPublish(img_roi);
+    //         a = a + 20;
+    //     }
+    //     catch (int er)
+    //     {
+    //         std::cout << er << std::endl;
+    //     }
+    // }
 }
 
 void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)

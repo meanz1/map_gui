@@ -19,8 +19,8 @@
             </div>
 
             <div id="map_size">
-                <button id="plus">+</button>
-                <button id="minus">-</button>
+                <button id="plus" onclick="plus()">+</button>
+                <button id="minus" onclick="minus()">-</button>
             </div>
 
         </div>
@@ -226,6 +226,54 @@
                 console.log("Pub message: ", String_map);
 
             }
+
+            function plus() {
+                console.log("plus");
+
+                //mapX = mapX + 5;
+                //mapY = mapY + 5;
+
+                const mapMsg = {
+                    type: "plus",
+                    width: canvas.width,
+                    height: canvas.height,
+                    x: mapX,
+                    y: mapY,
+                }
+
+                var msg_map = JSON.stringify(mapMsg)
+                var String_map = new ROSLIB.Message({
+                    data: msg_map,
+                });
+
+                mapPos.publish(String_map);
+                console.log("Pub message: ", String_map);
+            }
+
+
+            function minus() {
+                console.log("minus");
+
+                //mapX = mapX - 5;
+                //mapY = mapY - 5;
+
+                const mapMsg = {
+                    type: "minus",
+                    width: canvas.width,
+                    height: canvas.height,
+                    x: mapX,
+                    y: mapY,
+                }
+
+                var msg_map = JSON.stringify(mapMsg)
+                var String_map = new ROSLIB.Message({
+                    data: msg_map,
+                });
+
+                mapPos.publish(String_map);
+                console.log("Pub message: ", String_map);
+            }
+
 
             function drawLine() {
                 cnt = 0;
