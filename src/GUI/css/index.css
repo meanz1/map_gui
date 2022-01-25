@@ -6,12 +6,12 @@ html, body {
 
 header {
     height:15%;
-    background-color: rgb(215, 215, 230);
+    background-color: rgb(241, 227, 206);
 }
 
 main {
     height: 70%;
-    background-color: cornsilk;
+    background-color: rgb(241, 227, 206);
     display: flex;
 }
 

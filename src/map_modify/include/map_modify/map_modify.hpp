@@ -35,6 +35,8 @@ public:
     ros::Publisher pub_pgmsize;
     image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
+    cv::Mat gray;
+    cv::Mat img_roi;
     int map_width, map_height;
     int map_x, map_y;
 
@@ -45,8 +47,8 @@ public:
     int b = 10;
     void initNode();
 
-    int roi_x, roi_y, roi_width, roi_height;
-
+    int roi_x, roi_y, roi_height;
+    float roi_width;
     void mapCallback(nav_msgs::OccupancyGridConstPtr map);
     void readMap();
     // void mapViewCallback()
@@ -75,12 +77,12 @@ void MODMAP::initNode()
     map_pub_big = it.advertise("map_big", 1);
 
     ros::Rate loop_rate(10);
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
 }
 
 void MODMAP::readMap()
 {
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
 
     if (!img.data)
     {
@@ -113,7 +115,7 @@ void MODMAP::mapPublish(cv::Mat image)
     cv_ptr->header.frame_id = "";
     cv_ptr->header.seq = 1;
     cv_ptr->header.stamp = time;
-    cv_ptr->encoding = "mono8";
+    cv_ptr->encoding = "bgr8";
     cv_ptr->image = image;
 
     map_pub.publish(cv_ptr->toImageMsg());
@@ -127,7 +129,7 @@ void MODMAP::mapBigPublish(cv::Mat image)
     cv_ptr->header.frame_id = "";
     cv_ptr->header.seq = 1;
     cv_ptr->header.stamp = time;
-    cv_ptr->encoding = "mono8";
+    cv_ptr->encoding = "bgr8";
     cv_ptr->image = image;
 
     map_pub_big.publish(cv_ptr->toImageMsg());
@@ -153,9 +155,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     // map_width = std::stoi(width);
     // map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_UNCHANGED);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
     cv::Mat img_origin = img.clone();
-    cv::Mat img_roi;
 
     // cv::Point left_top(x, y);
     // cv::Point left_bottom(x, y + 40);
@@ -209,6 +210,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             er = 5;
             img_roi = img(cv::Rect(x, y, 40, 40));
             cv::resize(img_roi, img_roi, cv::Size(400, 400));
+            std::cout << img_roi.channels() << std::endl;
             roi_x = x;
             roi_y = y;
             roi_height = 40;
@@ -242,6 +244,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 er = 7;
                 img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
                 cv::resize(img_roi, img_roi, cv::Size(400, 400));
+                // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
                 if (roi_x + 40 - a > img.cols || roi_y + 40 - a > img.rows)
                 {
                     throw er;
@@ -270,11 +273,15 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 er = 9;
                 img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
                 cv::resize(img_roi, img_roi, cv::Size(400, 400));
+                // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
                 if (roi_x + 40 + b > img.cols || roi_y + 40 + b > img.rows)
                 {
                     throw er;
                 }
                 std::cout << roi_x << std::endl;
+                std::cout << roi_y << std::endl;
+                std::cout << roi_width << std::endl;
+                std::cout << 400 / roi_width << std::endl;
                 mapBigPublish(img_roi);
                 // b += 10;
             }
@@ -283,6 +290,32 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 std::cout << er << std::endl;
             }
         }
+    }
+
+    if (type == "save")
+    {
+        for (int i = 0; i < img_roi.cols; i++)
+        {
+            for (int j = 0; j < img_roi.rows; j++)
+            {
+                std::cout << "c" << std::endl;
+                //////////////////여기에 mat변환하는거야 !
+
+                if (img_roi.at<cv::Vec3b>(i, j)[0] == 255)
+                {
+                    std::cout << "change pixel0" << std::endl;
+                }
+                if (img_roi.at<cv::Vec3b>(i, j)[1] == 255)
+                {
+                    std::cout << "change pixel1" << std::endl;
+                }
+                if (img_roi.at<cv::Vec3b>(i, j)[2] == 255)
+                {
+                    std::cout << "change pixel2" << std::endl;
+                }
+            }
+        }
+        std::cout << "hpp->save" << std::endl;
     }
 
     // if (type == "plus")

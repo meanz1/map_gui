@@ -9,10 +9,12 @@
 </head>
 
 <body>
-    <header>header</header>
+    <header>
+        <h2>Map Editor</h2>
+    </header>
     <main>
         <div id="src">
-            <h2>Canvas</h2>
+
             <div id="main_can">
                 <canvas id="canvas"></canvas>
                 <img id="canvas_img"></img>
@@ -71,9 +73,18 @@
             var resolution;
             var pos = new Array();
             var miniarray = new Array();
-
+            var a;
+            var b;
             ctx.lineWidth = 1; // 컨버스에 그리는 라인의 두께 설정
             ctx.strokeStyle = "#006cb7";
+
+            var res_x;
+            var res_y;
+
+            var zoom_x;
+            var zoom_y;
+            var zoom_width;
+            var zoom_height;
 
             mini_ctx.lineWidth = 1;
             mini_ctx.strokeStyle = "#006cb7";
@@ -137,6 +148,7 @@
 
 
             function mDown(me) {
+
                 mini_can.width = miniarray[0];
                 mini_can.height = miniarray[1];
                 document.getElementById("canvas").style.zIndex = 1;
@@ -185,28 +197,46 @@
                 }
                 console.log(stX, stY);
 
-            }
-
-
-            function mDown_mini(me) {
-                mini_can.width = miniarray[0];
-                mini_can.height = miniarray[1];
-                document.getElementById("mini_can").style.zIndex = 1;
-                miniX = me.offsetX;
-                miniY = me.offsetY;
                 mini_ctx.fillStyle = 'blue';
                 mini_ctx.beginPath();
                 mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
                 mini_ctx.fill();
 
-                mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
+                mini_ctx.strokeRect(zoom_x, zoom_y, zoom_width, zoom_height);
                 mini_ctx.closePath();
 
+            }
+
+
+            function mDown_mini(me) {
+                a = 1.7;
+                b = 1.7;
+                zoom_width = 6.8;
+                zoom_height = 6.8;
+                miniX = me.offsetX;
+                miniY = me.offsetY;
+                zoom_x = miniX - 3.4;
+                zoom_y = miniY - 3.4;
+
+                mini_can.width = miniarray[0];
+                mini_can.height = miniarray[1];
+                document.getElementById("mini_can").style.zIndex = 1;
+
+                mini_ctx.fillStyle = 'blue';
+                mini_ctx.beginPath();
+                mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                mini_ctx.fill();
+
+                // mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
+                mini_ctx.strokeRect(zoom_x, zoom_y, zoom_width, zoom_height);
+                mini_ctx.closePath();
+
+
                 mapX = (miniX) / resolution;
-                mapY = (miniY) / resolution;
+                mapY = (miniY) / resolution; //중심좌표
                 mapX = parseInt(mapX);
                 mapY = parseInt(mapY);
-                mapX = mapX - 20;
+                mapX = mapX - 20; // 왼쪽 상단좌표
                 mapY = mapY - 20;
                 console.log(mapX);
 
@@ -228,17 +258,35 @@
             }
 
             function plus() {
-                console.log("plus");
 
+                mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
+                console.log("plus");
+                mini_ctx.fillStyle = 'blue';
+                mini_ctx.beginPath();
+                mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                mini_ctx.fill();
+
+                mini_ctx.closePath();
+                // mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
+                mini_ctx.strokeRect(zoom_x + a, zoom_y + a, zoom_width - 2 * a, zoom_height - 2 * a);
                 //mapX = mapX + 5;
                 //mapY = mapY + 5;
 
+                zoom_width = zoom_width - 2 * a;
+                zoom_height = zoom_height - 2 * a;
+                zoom_x = zoom_x + a;
+                zoom_y = zoom_y + a;
+                res_x = zoom_x / resolution;
+                res_y = zoom_y / resolution;
+                res_x = parseInt(res_x);
+                res_y = parseInt(res_y);
+                //a += 1.7;
                 const mapMsg = {
                     type: "plus",
                     width: canvas.width,
                     height: canvas.height,
-                    x: mapX,
-                    y: mapY,
+                    x: res_x,
+                    y: res_y,
                 }
 
                 var msg_map = JSON.stringify(mapMsg)
@@ -252,17 +300,34 @@
 
 
             function minus() {
-                console.log("minus");
 
+                mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
+                console.log("minus");
+                mini_ctx.fillStyle = 'blue';
+                mini_ctx.beginPath();
+                mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                mini_ctx.fill();
+
+                mini_ctx.closePath();
+                // mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
+                mini_ctx.strokeRect(zoom_x - a, zoom_y - a, zoom_width + 2 * a, zoom_height + 2 * a);
+                zoom_width = zoom_width + 2 * a;
+                zoom_height = zoom_height + 2 * a;
+                zoom_x = zoom_x - a;
+                zoom_y = zoom_y - a;
+                res_x = zoom_x / resolution;
+                res_y = zoom_y / resolution;
+                res_x = parseInt(res_x);
+                res_y = parseInt(res_y);
                 //mapX = mapX - 5;
                 //mapY = mapY - 5;
-
+                //a += 1.7;
                 const mapMsg = {
                     type: "minus",
                     width: canvas.width,
                     height: canvas.height,
-                    x: mapX,
-                    y: mapY,
+                    x: res_x,
+                    y: res_y,
                 }
 
                 var msg_map = JSON.stringify(mapMsg)
@@ -272,6 +337,8 @@
 
                 mapPos.publish(String_map);
                 console.log("Pub message: ", String_map);
+                console.log("width : ", res_x + zoom_width);
+                console.log(400 / (res_x + zoom_width));
             }
 
 
@@ -299,6 +366,8 @@
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "blue";
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
 
             function test() {
@@ -335,6 +404,21 @@
 
                 if (mode == 'save') {
                     console.log('save');
+                    const mapMsg = {
+                        type: "save",
+                        width: canvas.width,
+                        height: canvas.height,
+                        x: res_x,
+                        y: res_y,
+                    }
+
+                    var msg_map = JSON.stringify(mapMsg)
+                    var String_map = new ROSLIB.Message({
+                        data: msg_map,
+                    });
+
+                    mapPos.publish(String_map);
+                    console.log("Pub message: ", String_map);
 
 
                 }
