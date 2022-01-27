@@ -40,8 +40,10 @@ public:
     int map_width, map_height;
     int map_x, map_y;
 
-    std::vector<cv::Point> pointList; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
+    float roi_res;
 
+    std::vector<cv::Point> pointList; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
+    cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2;
     float m2pixel;
     int a = 10;
     int b = 10;
@@ -77,12 +79,12 @@ void MODMAP::initNode()
     map_pub_big = it.advertise("map_big", 1);
 
     ros::Rate loop_rate(10);
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
+    // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_COLOR);
 }
 
 void MODMAP::readMap()
 {
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
 
     if (!img.data)
     {
@@ -115,7 +117,7 @@ void MODMAP::mapPublish(cv::Mat image)
     cv_ptr->header.frame_id = "";
     cv_ptr->header.seq = 1;
     cv_ptr->header.stamp = time;
-    cv_ptr->encoding = "bgr8";
+    cv_ptr->encoding = "mono8";
     cv_ptr->image = image;
 
     map_pub.publish(cv_ptr->toImageMsg());
@@ -129,7 +131,7 @@ void MODMAP::mapBigPublish(cv::Mat image)
     cv_ptr->header.frame_id = "";
     cv_ptr->header.seq = 1;
     cv_ptr->header.stamp = time;
-    cv_ptr->encoding = "bgr8";
+    cv_ptr->encoding = "mono8";
     cv_ptr->image = image;
 
     map_pub_big.publish(cv_ptr->toImageMsg());
@@ -141,11 +143,13 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     Json::Value Position;
     Json::Reader reader;
     reader.parse(msg->data, root);
+    std::cout << root << std::endl;
     std::string type = root["type"].asString(); // get_map
     int width = root["width"].asInt();
     int height = root["height"].asInt();
     int x = root["x"].asInt();
     int y = root["y"].asInt();
+    Position = root["cv_pos"];
 
     // std::vector<std::string> x_split = split(x_, '.');
     // std::vector<std::string> y_split = split(y_, '.');
@@ -155,9 +159,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     // map_width = std::stoi(width);
     // map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
     cv::Mat img_origin = img.clone();
-
+    cv::Scalar black(0, 0, 0);
     // cv::Point left_top(x, y);
     // cv::Point left_bottom(x, y + 40);
     // cv::Point right_top(x + 40, y);
@@ -281,6 +285,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 std::cout << roi_x << std::endl;
                 std::cout << roi_y << std::endl;
                 std::cout << roi_width << std::endl;
+                roi_res = roi_width / 400;
+
                 std::cout << 400 / roi_width << std::endl;
                 mapBigPublish(img_roi);
                 // b += 10;
@@ -292,30 +298,111 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
     }
 
+    if (type == "ok_line")
+    {
+        center.x = x;
+        center.y = y;
+        center_2.x = x + roi_width;
+        center_2.y = y;
+
+        pointList.clear();
+        for (int i = 1; i < 3; i++)
+        {
+            std::cout << roi_res << std::endl;
+            line.x = Position[i][0].asInt() * roi_res;
+            std::cout << line.x << std::endl;
+            line.x = line.x + x;
+            line.y = Position[i][1].asInt() * roi_res;
+            line.y = line.y + y;
+            pointList.push_back(line);
+        }
+        cv::circle(img, center, 5, black);
+        cv::circle(img, center_2, 5, black);
+        std::cout << pointList << std::endl;
+        cv::line(img, pointList[0], pointList[1], black);
+        std::cout << img.rows << std::endl;
+        std::cout << img.cols << std::endl;
+        cv::imshow("h", img);
+
+        cv::waitKey(0);
+        //  std::cout << pos << std::endl;
+    }
+    if (type == "ok_square")
+    {
+        pointList.clear();
+        for (int i = 1; i < 5; i++)
+        {
+            sqr.x = Position[i][0].asInt() * roi_res;
+            sqr.x += x;
+            sqr.y = Position[i][1].asInt() * roi_res;
+            sqr.y += y;
+            pointList.push_back(sqr);
+        }
+        std::cout << pointList << std::endl;
+        cv::line(img, pointList[0], pointList[1], black);
+        cv::line(img, pointList[1], pointList[2], black);
+        cv::line(img, pointList[2], pointList[3], black);
+        cv::line(img, pointList[3], pointList[0], black);
+        cv::imshow("h", img);
+
+        cv::waitKey(0);
+    }
+
     if (type == "save")
     {
-        for (int i = 0; i < img_roi.cols; i++)
+        // cv::cvtColor(img, img, CV_BGR2GRAY);
+        std::cout << "channel" << img.channels() << std::endl;
+        for (int i = 0; i < img.rows; i++)
         {
-            for (int j = 0; j < img_roi.rows; j++)
+            for (int j = 0; j < img.cols; j++)
             {
-                std::cout << "c" << std::endl;
-                //////////////////여기에 mat변환하는거야 !
-
-                if (img_roi.at<cv::Vec3b>(i, j)[0] == 255)
+                if (img.channels() == 1)
                 {
-                    std::cout << "change pixel0" << std::endl;
+                    printf("%d \t", img.at<uchar>(i, j));
                 }
-                if (img_roi.at<cv::Vec3b>(i, j)[1] == 255)
+                else if (img.channels() == 3)
                 {
-                    std::cout << "change pixel1" << std::endl;
-                }
-                if (img_roi.at<cv::Vec3b>(i, j)[2] == 255)
-                {
-                    std::cout << "change pixel2" << std::endl;
+                    std::cout << "3" << std::endl;
                 }
             }
         }
-        std::cout << "hpp->save" << std::endl;
+        // for (int i = 0; i < img.rows; i++)
+        // {
+        //     for (int j = 0; j < img.cols; j++)
+        //     {
+
+        //         if (img.channels() == 1)
+        //         {
+        //             uchar a = img.at<uchar>(i, j);
+        //             std::cout << a << std::endl;
+        //         } //////////////////여기에 mat변환하는거야 !
+
+        //         else if (img.channels() == 3)
+        //         {
+        //             // if (img.at<cv::Vec3b>(i, j)[0] == 0 && img.at<cv::Vec3b>(i, j)[1] == 0 && img.at<cv::Vec3b>(i, j)[2] == 255)
+        //             // {
+        //             //     std::cout << "change pixel0" << std::endl;
+        //             //     img.at<cv::Vec3b>(i, j)[0] == 0;
+        //             //     img.at<cv::Vec3b>(i, j)[1] == 0;
+        //             //     img.at<cv::Vec3b>(i, j)[1] == 0;
+        //             //     cv::imshow("h", img);
+        //             //     cv::waitKey(0);
+        //             // }
+
+        //             uchar b = img.at<cv::Vec3b>(i, j)[0];
+        //             uchar g = img.at<cv::Vec3b>(i, j)[1];
+        //             uchar r = img.at<cv::Vec3b>(i, j)[2];
+
+        //             if (!img.at<cv::Vec3b>(i, j)[0] == 254 && !img.at<cv::Vec3b>(i, j)[1] == 254 && !img.at<cv::Vec3b>(i, j)[2] == 254)
+        //             {
+        //                 if (!img.at<cv::Vec3b>(i, j)[0] == 205 && !img.at<cv::Vec3b>(i, j)[1] == 205 && !img.at<cv::Vec3b>(i, j)[2] == 205)
+        //                 {
+        //                     printf("\t (%d, %d, %d)", r, g, b);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     // if (type == "plus")

@@ -23,6 +23,7 @@
             <div id="map_size">
                 <button id="plus" onclick="plus()">+</button>
                 <button id="minus" onclick="minus()">-</button>
+                <button id="ok" onclick="ok()">OK</button>
             </div>
 
         </div>
@@ -80,6 +81,9 @@
 
             var res_x;
             var res_y;
+
+            var cv_x;
+            var cv_y;
 
             var zoom_x;
             var zoom_y;
@@ -312,6 +316,7 @@
                 // mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
                 mini_ctx.strokeRect(zoom_x - a, zoom_y - a, zoom_width + 2 * a, zoom_height + 2 * a);
                 zoom_width = zoom_width + 2 * a;
+
                 zoom_height = zoom_height + 2 * a;
                 zoom_x = zoom_x - a;
                 zoom_y = zoom_y - a;
@@ -341,6 +346,46 @@
                 console.log(400 / (res_x + zoom_width));
             }
 
+            function ok() {
+                console.log("ok");
+
+                if (line) {
+                    const mapMsg = {
+                        type: "ok_line",
+                        width: canvas.width,
+                        height: canvas.height,
+                        x: res_x,
+                        y: res_y,
+                        cv_pos: pos,
+                    }
+                    var msg_map = JSON.stringify(mapMsg)
+                    var String_map = new ROSLIB.Message({
+                        data: msg_map,
+                    });
+                }
+
+                if (square) {
+                    const mapMsg = {
+                        type: "ok_square",
+                        width: canvas.width,
+                        height: canvas.height,
+                        x: res_x,
+                        y: res_y,
+                        cv_pos: pos,
+                    }
+                    var msg_map = JSON.stringify(mapMsg)
+                    var String_map = new ROSLIB.Message({
+                        data: msg_map,
+                    });
+                }
+
+
+
+
+                mapPos.publish(String_map);
+
+
+            }
 
             function drawLine() {
                 cnt = 0;
