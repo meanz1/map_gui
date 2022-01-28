@@ -35,8 +35,10 @@ public:
     ros::Publisher pub_pgmsize;
     image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
-    cv::Mat gray;
-    cv::Mat img_roi;
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
+    cv::Mat img_roi, img_origin;
+    cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
+
     int map_width, map_height;
     int map_x, map_y;
 
@@ -63,7 +65,8 @@ public:
         : it(n)
     {
         initNode();
-
+        cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
+        cv::Mat img_roi, img_origin;
         // readMap();
         //  readPGM(&a);
     }
@@ -84,7 +87,7 @@ void MODMAP::initNode()
 
 void MODMAP::readMap()
 {
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
 
     if (!img.data)
     {
@@ -159,9 +162,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     // map_width = std::stoi(width);
     // map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
-    cv::Mat img_origin = img.clone();
-    cv::Scalar black(0, 0, 0);
+    img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
+    img_origin = img.clone();
+    cv::Scalar red(0, 0, 255);
     // cv::Point left_top(x, y);
     // cv::Point left_bottom(x, y + 40);
     // cv::Point right_top(x + 40, y);
@@ -316,13 +319,32 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             line.y = line.y + y;
             pointList.push_back(line);
         }
-        cv::circle(img, center, 5, black);
-        cv::circle(img, center_2, 5, black);
+        // cv::circle(img, center, 5, black);
+        // cv::circle(img, center_2, 5, black);
         std::cout << pointList << std::endl;
-        cv::line(img, pointList[0], pointList[1], black);
+        cv::line(color_img, pointList[0], pointList[1], red);
+        // cv::line(img, pointList[0], pointList[1], red);
         std::cout << img.rows << std::endl;
         std::cout << img.cols << std::endl;
+        img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+        cv::resize(img_roi, img_roi, cv::Size(400, 400));
+        mapBigPublish(img_roi);
+        std::cout << color_img.rows << " " << color_img.cols << std::endl;
+        std::cout << "color_img channels " << color_img.channels() << std::endl; // 3채널
+
+        for (int i = 0; i < color_img.rows; i++)
+        {
+            for (int j = 0; j < color_img.cols; j++)
+            {
+                if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
+                {
+                    img.at<uchar>(i, j) == 0;
+                }
+            }
+        }
+
         cv::imshow("h", img);
+        cv::imshow("c", color_img);
 
         cv::waitKey(0);
         //  std::cout << pos << std::endl;
@@ -339,10 +361,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             pointList.push_back(sqr);
         }
         std::cout << pointList << std::endl;
-        cv::line(img, pointList[0], pointList[1], black);
-        cv::line(img, pointList[1], pointList[2], black);
-        cv::line(img, pointList[2], pointList[3], black);
-        cv::line(img, pointList[3], pointList[0], black);
+        cv::line(img, pointList[0], pointList[1], red);
+        cv::line(img, pointList[1], pointList[2], red);
+        cv::line(img, pointList[2], pointList[3], red);
+        cv::line(img, pointList[3], pointList[0], red);
         cv::imshow("h", img);
 
         cv::waitKey(0);
