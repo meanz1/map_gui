@@ -41,14 +41,16 @@ public:
 
     int map_width, map_height;
     int map_x, map_y;
-
+    int square_j;
     float roi_res;
 
-    std::vector<cv::Point> pointList; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
+    std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
+    std::vector<cv::Point> pointList_square;
     cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2;
     float m2pixel;
     int a = 10;
     int b = 10;
+    std::string status = "default";
     void initNode();
 
     int roi_x, roi_y, roi_height;
@@ -301,36 +303,56 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
     }
 
-    if (type == "ok_line")
+    if (type == "ok_line" || type == "ok_square")
     {
-        center.x = x;
-        center.y = y;
-        center_2.x = x + roi_width;
-        center_2.y = y;
 
-        pointList.clear();
-        for (int i = 1; i < 3; i++)
+        if (type == "ok_line")
         {
-            std::cout << roi_res << std::endl;
-            line.x = Position[i][0].asInt() * roi_res;
-            std::cout << line.x << std::endl;
-            line.x = line.x + x;
-            line.y = Position[i][1].asInt() * roi_res;
-            line.y = line.y + y;
-            pointList.push_back(line);
+            center.x = x;
+            center.y = y;
+            center_2.x = x + roi_width;
+            center_2.y = y;
+
+            for (int i = 1; i < 3; i++)
+            {
+                std::cout << roi_res << std::endl;
+                line.x = Position[i][0].asInt() * roi_res;
+                std::cout << line.x << std::endl;
+                line.x = line.x + x;
+                line.y = Position[i][1].asInt() * roi_res;
+                line.y = line.y + y;
+                pointList_line.push_back(line);
+            }
+
+            std::cout << "size : " << pointList_line.size() << std::endl;
+            for (int j = 1; j < pointList_line.size() + 1; j++)
+            {
+                cv::line(color_img, pointList_line[j - 1], pointList_line[j], red);
+                j++;
+            }
         }
-        // cv::circle(img, center, 5, black);
-        // cv::circle(img, center_2, 5, black);
-        std::cout << pointList << std::endl;
-        cv::line(color_img, pointList[0], pointList[1], red);
-        // cv::line(img, pointList[0], pointList[1], red);
-        std::cout << img.rows << std::endl;
-        std::cout << img.cols << std::endl;
-        img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
-        cv::resize(img_roi, img_roi, cv::Size(400, 400));
-        mapBigPublish(img_roi);
-        std::cout << color_img.rows << " " << color_img.cols << std::endl;
-        std::cout << "color_img channels " << color_img.channels() << std::endl; // 3채널
+
+        else if (type == "ok_square")
+        {
+            for (int i = 1; i < 5; i++)
+            {
+                sqr.x = Position[i][0].asInt() * roi_res;
+                sqr.x += x;
+                sqr.y = Position[i][1].asInt() * roi_res;
+                sqr.y += y;
+                pointList_square.push_back(sqr);
+            }
+
+            for (int j = 1; j < pointList_square.size() + 1; j++)
+            {
+                square_j = j;
+                if (j % 4 == 0)
+                {
+                    square_j -= 4;
+                }
+                cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], red);
+            }
+        }
 
         for (int i = 0; i < color_img.rows; i++)
         {
@@ -338,172 +360,91 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             {
                 if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
                 {
-                    img.at<uchar>(i, j) == 0;
+                    img.at<uchar>(i, j) = 0;
                 }
             }
         }
 
         cv::imshow("h", img);
-        cv::imshow("c", color_img);
-
-        cv::waitKey(0);
-        //  std::cout << pos << std::endl;
-    }
-    if (type == "ok_square")
-    {
-        pointList.clear();
-        for (int i = 1; i < 5; i++)
-        {
-            sqr.x = Position[i][0].asInt() * roi_res;
-            sqr.x += x;
-            sqr.y = Position[i][1].asInt() * roi_res;
-            sqr.y += y;
-            pointList.push_back(sqr);
-        }
-        std::cout << pointList << std::endl;
-        cv::line(img, pointList[0], pointList[1], red);
-        cv::line(img, pointList[1], pointList[2], red);
-        cv::line(img, pointList[2], pointList[3], red);
-        cv::line(img, pointList[3], pointList[0], red);
-        cv::imshow("h", img);
+        // cv::imshow("c", color_img);
 
         cv::waitKey(0);
     }
 
     if (type == "save")
     {
+        status = "save";
+
         // cv::cvtColor(img, img, CV_BGR2GRAY);
         std::cout << "channel" << img.channels() << std::endl;
-        for (int i = 0; i < img.rows; i++)
-        {
-            for (int j = 0; j < img.cols; j++)
-            {
-                if (img.channels() == 1)
-                {
-                    printf("%d \t", img.at<uchar>(i, j));
-                }
-                else if (img.channels() == 3)
-                {
-                    std::cout << "3" << std::endl;
-                }
-            }
-        }
         // for (int i = 0; i < img.rows; i++)
         // {
         //     for (int j = 0; j < img.cols; j++)
         //     {
-
         //         if (img.channels() == 1)
         //         {
-        //             uchar a = img.at<uchar>(i, j);
-        //             std::cout << a << std::endl;
-        //         } //////////////////여기에 mat변환하는거야 !
-
+        //             printf("%d \t", img.at<uchar>(i, j));
+        //         }
         //         else if (img.channels() == 3)
         //         {
-        //             // if (img.at<cv::Vec3b>(i, j)[0] == 0 && img.at<cv::Vec3b>(i, j)[1] == 0 && img.at<cv::Vec3b>(i, j)[2] == 255)
-        //             // {
-        //             //     std::cout << "change pixel0" << std::endl;
-        //             //     img.at<cv::Vec3b>(i, j)[0] == 0;
-        //             //     img.at<cv::Vec3b>(i, j)[1] == 0;
-        //             //     img.at<cv::Vec3b>(i, j)[1] == 0;
-        //             //     cv::imshow("h", img);
-        //             //     cv::waitKey(0);
-        //             // }
-
-        //             uchar b = img.at<cv::Vec3b>(i, j)[0];
-        //             uchar g = img.at<cv::Vec3b>(i, j)[1];
-        //             uchar r = img.at<cv::Vec3b>(i, j)[2];
-
-        //             if (!img.at<cv::Vec3b>(i, j)[0] == 254 && !img.at<cv::Vec3b>(i, j)[1] == 254 && !img.at<cv::Vec3b>(i, j)[2] == 254)
-        //             {
-        //                 if (!img.at<cv::Vec3b>(i, j)[0] == 205 && !img.at<cv::Vec3b>(i, j)[1] == 205 && !img.at<cv::Vec3b>(i, j)[2] == 205)
-        //                 {
-        //                     printf("\t (%d, %d, %d)", r, g, b);
-        //                 }
-        //             }
+        //             std::cout << "3" << std::endl;
         //         }
         //     }
         // }
     }
-
-    // if (type == "plus")
-    // {
-    //     int er = 0;
-
-    //     try
-    //     {
-    //         er = 7;
-    //         img_roi = img(cv::Rect(x, y, 40 - a, 40 - a));
-    //         cv::resize(img_roi, img_roi, cv::Size(400, 400));
-    //         if (x + 40 - a > img.cols || y + 40 - a > img.rows)
-    //         {
-    //             throw er;
-    //         }
-
-    //         mapBigPublish(img_roi);
-    //         a = a - 20;
-    //     }
-    //     catch (int er)
-    //     {
-    //         std::cout << er << std::endl;
-    //     }
-    // }
-
-    // if (type == "minus")
-    // {
-    //     int er = 0;
-
-    //     try
-    //     {
-    //         er = 7;
-    //         img_roi = img(cv::Rect(x, y, 40 + a, 40 + a));
-    //         cv::resize(img_roi, img_roi, cv::Size(400, 400));
-    //         if (x + 40 + a > img.cols || y + 40 + a > img.rows)
-    //         {
-    //             throw er;
-    //         }
-
-    //         mapBigPublish(img_roi);
-    //         a = a + 20;
-    //     }
-    //     catch (int er)
-    //     {
-    //         std::cout << er << std::endl;
-    //     }
-    // }
 }
-
 void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
 {
-    m2pixel = 1.0 / map->info.resolution;
-    cv::Mat init_image((int)map->info.height, (int)map->info.width, CV_8UC3);
-    if (Mapimage.empty())
-        Mapimage = cv::Mat((int)map->info.height, (int)map->info.width, CV_8UC3, cv::Scalar(255, 255, 255));
 
-    for (int i = 0; i < map->info.width; i++)
+    if (status == "save")
     {
-        for (int j = 0; j < map->info.height; j++)
+        std::cout << "dddd" << std::endl;
+        nav_msgs::OccupancyGrid pgm_occ;
+
+        pgm_occ.header.frame_id = map->header.frame_id;
+        pgm_occ.header.seq = map->header.seq;
+        pgm_occ.header.stamp = map->header.stamp;
+
+        pgm_occ.info.width = map->info.width;
+        pgm_occ.info.height = map->info.height;
+        pgm_occ.info.resolution = map->info.resolution;
+        pgm_occ.info.map_load_time = map->info.map_load_time;
+
+        pgm_occ.info.origin.position.x = map->info.origin.position.x;
+        pgm_occ.info.origin.position.y = map->info.origin.position.y;
+        pgm_occ.info.origin.position.z = map->info.origin.position.z;
+
+        pgm_occ.info.origin.orientation.x = map->info.origin.orientation.x;
+        pgm_occ.info.origin.orientation.y = map->info.origin.orientation.y;
+        pgm_occ.info.origin.orientation.z = map->info.origin.orientation.z;
+        pgm_occ.info.origin.orientation.w = map->info.origin.orientation.w;
+
+        for (int i = 0; i < map->info.height; i++)
         {
-            if (map->data[j * (int)map->info.width + i] == 0)
+            for (int j = 0; j < map->info.width; j++)
             {
-                std::cout << "000" << std::endl;
-                init_image.at<cv::Vec3b>(j, i)[0] = 255;
-                init_image.at<cv::Vec3b>(j, i)[1] = 255;
-                init_image.at<cv::Vec3b>(j, i)[2] = 255;
+                if (map->data[i * map->info.width + j] == 0)
+                {
+                    pgm_occ.data.push_back(0);
+                }
+                else if (map->data[i * map->info.width + j] == 100)
+                {
+                    pgm_occ.data.push_back(100);
+                }
+                else
+                {
+                    pgm_occ.data.push_back(-1);
+                }
             }
-            else if (map->data[j * (int)map->info.width + i] == 100)
+        }
+
+        for (int i = 0; i < img.rows; i++)
+        {
+            for (int j = 0; j < img.cols; j++)
             {
-                init_image.at<cv::Vec3b>(j, i)[0] = 0; // 0
-                init_image.at<cv::Vec3b>(j, i)[1] = 0;
-                init_image.at<cv::Vec3b>(j, i)[2] = 0;
-            }
-            else
-            {
-                init_image.at<cv::Vec3b>(j, i)[0] = 127; // 127s
-                init_image.at<cv::Vec3b>(j, i)[1] = 127;
-                init_image.at<cv::Vec3b>(j, i)[2] = 127;
+                //여기에 0쓰면 됨이미지랑 비교
             }
         }
     }
+    std::cout << "finish" << std::endl;
 }
