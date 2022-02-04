@@ -32,18 +32,22 @@ public:
     ros::NodeHandle n;
     image_transport::ImageTransport it;
     ros::Subscriber sub, sub2, sub3, sub4;
-    ros::Publisher pub_pgmsize;
+    ros::Publisher pub_pgmsize, occ_pub;
     image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
     cv::Mat img_roi, img_origin;
     cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
-
+    nav_msgs::OccupancyGrid pgm_occ;
     int map_width, map_height;
     int map_x, map_y;
     int square_j;
     float roi_res;
-
+    int threshold_occupied = 65;
+    int threshold_free = 25;
+    std::mutex mtx;
+    std::string directory_path = "/home/minji/map_gui/src/Map2/";
+    std::string filename = "stMap";
     std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
     std::vector<cv::Point> pointList_square;
     cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2;
@@ -52,7 +56,7 @@ public:
     int b = 10;
     std::string status = "default";
     void initNode();
-
+    void MapGenerator(std::string dir_path, const std::string &filename, int threshold_occupied, int threshold_free, nav_msgs::OccupancyGrid map);
     int roi_x, roi_y, roi_height;
     float roi_width;
     void mapCallback(nav_msgs::OccupancyGridConstPtr map);
@@ -76,12 +80,13 @@ public:
 
 void MODMAP::initNode()
 {
-    sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
+
     sub2 = n.subscribe("/btnInput", 1, &MODMAP::btnCallback, this);
     sub3 = n.subscribe("/btnInput", 1, &MODMAP::jsonCallback, this);
     sub4 = n.subscribe("/mappos", 1, &MODMAP::jsonCallback, this);
     map_pub = it.advertise("map_pgm", 1);
     map_pub_big = it.advertise("map_big", 1);
+    occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
 
     ros::Rate loop_rate(10);
     // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_COLOR);
@@ -366,7 +371,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
 
         cv::imshow("h", img);
-        // cv::imshow("c", color_img);
 
         cv::waitKey(0);
     }
@@ -374,23 +378,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     if (type == "save")
     {
         status = "save";
+        sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
 
-        // cv::cvtColor(img, img, CV_BGR2GRAY);
         std::cout << "channel" << img.channels() << std::endl;
-        // for (int i = 0; i < img.rows; i++)
-        // {
-        //     for (int j = 0; j < img.cols; j++)
-        //     {
-        //         if (img.channels() == 1)
-        //         {
-        //             printf("%d \t", img.at<uchar>(i, j));
-        //         }
-        //         else if (img.channels() == 3)
-        //         {
-        //             std::cout << "3" << std::endl;
-        //         }
-        //     }
-        // }
     }
 }
 void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
@@ -399,8 +389,8 @@ void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
     if (status == "save")
     {
         std::cout << "dddd" << std::endl;
-        nav_msgs::OccupancyGrid pgm_occ;
 
+        mtx.lock();
         pgm_occ.header.frame_id = map->header.frame_id;
         pgm_occ.header.seq = map->header.seq;
         pgm_occ.header.stamp = map->header.stamp;
@@ -419,6 +409,9 @@ void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
         pgm_occ.info.origin.orientation.z = map->info.origin.orientation.z;
         pgm_occ.info.origin.orientation.w = map->info.origin.orientation.w;
 
+        // pgm_occ.data.resize(pgm_occ.info.width * pgm_occ.info.height);
+        mtx.unlock();
+        mtx.lock();
         for (int i = 0; i < map->info.height; i++)
         {
             for (int j = 0; j < map->info.width; j++)
@@ -438,13 +431,76 @@ void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
             }
         }
 
-        for (int i = 0; i < img.rows; i++)
+        mtx.unlock();
+        mtx.lock();
+        // for (int i = 0; i < img.rows; i++)
+        // {
+        //     std::cout << "ok";
+        //     for (int j = 0; j < img.cols; j++)
+        //     {
+        //         if (img.at<uchar>(i, j) == 0)
+        //         {
+        //             pgm_occ.data[i * img.cols + j] = 0;
+        //         }
+        //         //여기에 0쓰면 됨이미지랑 비교
+        //     }
+        // }
+
+        occ_pub.publish(pgm_occ);
+    }
+    std::cout << "finish" << std::endl;
+    mtx.unlock();
+    MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
+}
+
+void MODMAP::MapGenerator(std::string dir_path, const std::string &filename_, int threshold_occupied_, int threshold_free_, nav_msgs::OccupancyGrid map)
+{
+    if (threshold_occupied <= threshold_free)
+    {
+        std::cout << "threshold_free must be smaller than threshold_occupied" << std::endl;
+        return;
+    }
+
+    std::string cmd = "mkdir -p " + dir_path;
+    int system_return = std::system(cmd.c_str());
+
+    if (system_return != 0)
+        printf("system command fail %s", cmd.c_str());
+    else
+        printf("create directory %s", dir_path.c_str());
+
+    printf("Received a %d X %d map @ %.3f m/pix", map.info.width, map.info.height, map.info.resolution);
+
+    std::string mapdatafile = dir_path + filename_ + ".pgm";
+    printf("Writing map occupancy data to %s", mapdatafile.c_str());
+    FILE *out = fopen(mapdatafile.c_str(), "w");
+    if (!out)
+    {
+        printf("Couldn't save map file to %s", mapdatafile.c_str());
+        return;
+    }
+
+    fprintf(out, "P5\n# CREATOR: map_saver.cpp %.3f m/pix\n%d %d\n255\n",
+            map.info.resolution, map.info.width, map.info.height);
+    for (unsigned int y = 0; y < map.info.height; y++)
+    {
+        for (unsigned int x = 0; x < map.info.width; x++)
         {
-            for (int j = 0; j < img.cols; j++)
-            {
-                //여기에 0쓰면 됨이미지랑 비교
+            unsigned int i = x + (map.info.height - y - 1) * map.info.width;
+            if (map.data[i] >= 0 && map.data[i] <= threshold_free_)
+            { // [0,free)
+                fputc(254, out);
+            }
+            else if (map.data[i] >= threshold_occupied_)
+            { // (occ,255]
+                fputc(000, out);
+            }
+            else
+            { // occ [0.25,0.65]
+                fputc(205, out);
             }
         }
     }
-    std::cout << "finish" << std::endl;
+
+    fclose(out);
 }
