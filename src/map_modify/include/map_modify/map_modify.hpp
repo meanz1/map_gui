@@ -22,7 +22,7 @@
 
 #include <opencv4/opencv2/opencv.hpp>
 #include <opencv4/opencv2/highgui/highgui.hpp>
-
+#include <opencv4/opencv2/imgproc/imgproc.hpp>
 #define TRUE 1
 #define FALSE 0
 
@@ -41,7 +41,7 @@ public:
     nav_msgs::OccupancyGrid pgm_occ;
     int map_width, map_height;
     int map_x, map_y;
-    int square_j;
+    int square_j, erase_j;
     float roi_res;
     int threshold_occupied = 65;
     int threshold_free = 25;
@@ -50,8 +50,10 @@ public:
     std::string filename = "stMap";
     std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
     std::vector<cv::Point> pointList_square;
-    cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2;
+    std::vector<cv::Point> pointList_erase;
+    cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase;
     float m2pixel;
+
     int a = 10;
     int b = 10;
     std::string status = "default";
@@ -171,7 +173,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     float big_size, small_size, resolution, w, h;
     img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
     img_origin = img.clone();
-    cv::Scalar red(0, 0, 255);
+    cv::Scalar red(0, 0, 255); //지우기
+    cv::Scalar green(0, 255, 0);
+    cv::Scalar blue(255, 0, 0); //그리기
     // cv::Point left_top(x, y);
     // cv::Point left_bottom(x, y + 40);
     // cv::Point right_top(x + 40, y);
@@ -308,7 +312,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
     }
 
-    if (type == "ok_line" || type == "ok_square")
+    if (type == "ok_line" || type == "ok_square" || type == "ok_erase")
     {
 
         if (type == "ok_line")
@@ -332,8 +336,23 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             std::cout << "size : " << pointList_line.size() << std::endl;
             for (int j = 1; j < pointList_line.size() + 1; j++)
             {
-                cv::line(color_img, pointList_line[j - 1], pointList_line[j], red);
+                cv::line(color_img, pointList_line[j - 1], pointList_line[j], blue);
                 j++;
+            }
+
+            for (int i = 0; i < color_img.rows; i++)
+            {
+                for (int j = 0; j < color_img.cols; j++)
+                {
+                    if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
+                    {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
+                    {
+                        img.at<uchar>(i, j) = 255;
+                    }
+                }
             }
         }
 
@@ -355,17 +374,66 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 {
                     square_j -= 4;
                 }
-                cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], red);
+                cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], blue);
+            }
+
+            for (int i = 0; i < color_img.rows; i++)
+            {
+                for (int j = 0; j < color_img.cols; j++)
+                {
+                    if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
+                    {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
+                    {
+                        img.at<uchar>(i, j) = 255;
+                    }
+                }
             }
         }
-
-        for (int i = 0; i < color_img.rows; i++)
+        else if (type == "ok_erase")
         {
-            for (int j = 0; j < color_img.cols; j++)
+            int erase_np[] = {4};
+            cv::Point erase_points[1][4];
+
+            for (int i = 1; i < 5; i++)
             {
-                if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
+                erase.x = Position[i][0].asInt() * roi_res;
+                erase.x += x;
+                erase.y = Position[i][1].asInt() * roi_res;
+                erase.y += y;
+                pointList_erase.push_back(erase);
+            }
+            erase_points[0][0] = pointList_erase[pointList_erase.size() - 4];
+            erase_points[0][1] = pointList_erase[pointList_erase.size() - 3];
+            erase_points[0][2] = pointList_erase[pointList_erase.size() - 2];
+            erase_points[0][3] = pointList_erase[pointList_erase.size() - 1];
+
+            for (int j = 1; j < pointList_erase.size() + 1; j++)
+            {
+                erase_j = j;
+                if (j % 4 == 0)
                 {
-                    img.at<uchar>(i, j) = 0;
+                    erase_j -= 4;
+                }
+                cv::line(color_img, pointList_erase[j - 1], pointList_erase[erase_j], red, 1);
+            }
+
+            const cv::Point *ppt[1] = {erase_points[0]};
+            cv::fillPoly(color_img, ppt, erase_np, 1, red, 8);
+            for (int i = 0; i < color_img.rows; i++)
+            {
+                for (int j = 0; j < color_img.cols; j++)
+                {
+                    if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
+                    {
+                        img.at<uchar>(i, j) = 0;
+                    }
+                    if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
+                    {
+                        img.at<uchar>(i, j) = 255;
+                    }
                 }
             }
         }
@@ -433,18 +501,23 @@ void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
 
         mtx.unlock();
         mtx.lock();
-        // for (int i = 0; i < img.rows; i++)
-        // {
-        //     std::cout << "ok";
-        //     for (int j = 0; j < img.cols; j++)
-        //     {
-        //         if (img.at<uchar>(i, j) == 0)
-        //         {
-        //             pgm_occ.data[i * img.cols + j] = 0;
-        //         }
-        //         //여기에 0쓰면 됨이미지랑 비교
-        //     }
-        // }
+        for (int i = 0; i < img.cols; i++)
+        {
+
+            for (int j = 0; j < img.rows; j++)
+            {
+                int j_ = img.cols - j;
+                if (color_img.at<cv::Vec3b>(j, i)[0] == 255 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 0)
+                {
+                    pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 100;
+                }
+                else if (color_img.at<cv::Vec3b>(j, i)[0] == 0 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 255)
+                {
+                    pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 0;
+                }
+                //여기에 0쓰면 됨이미지랑 비교
+            }
+        }
 
         occ_pub.publish(pgm_occ);
     }

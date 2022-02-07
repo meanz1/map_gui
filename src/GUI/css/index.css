@@ -5,12 +5,12 @@ html, body {
 }
 
 header {
-    height:15%;
+    height:50px;
     background-color: rgb(241, 227, 206);
 }
 
 main {
-    height: 70%;
+    height: 90%;
     background-color: rgb(241, 227, 206);
     display: flex;
 }
@@ -103,6 +103,14 @@ main h2 {
     margin-top: 20px;
     background-color: white;
 }
+
+#all_erase {
+    height: 30px;
+    width: 30%;
+    margin-top: 20px;
+    background-color: white;
+}
+
 
 #test {
     height: 30px;

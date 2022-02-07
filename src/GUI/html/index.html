@@ -33,7 +33,8 @@
             <p id="draw">Draw</p>
             <button id="line" onclick="drawLine()">Line</button>
             <button id="square" onclick="drawSquare()">Square</button>
-            <button id="eraser" onclick="erase()">Eraser</button>
+            <button id="eraser" onclick="drawErase()">Eraser</button>
+            <button id="all_erase" onclick="allErase()">remove ALL</button>
             <div id="map">
                 <canvas id="mini_can"></canvas>
                 <img id="mini_can_img"></img>
@@ -97,6 +98,7 @@
             var miniX, miniY, mapX, mapY;
             var line = false;
             var square = false;
+            var erase = false;
             var cnt = 0;
 
             var mapimg = new ROSLIB.Topic({
@@ -168,7 +170,7 @@
 
                     if (cnt == 2) {
                         ctx.lineWidth = 3;
-                        ctx.strokeStyle = "rgb(0, 255, 0)";
+                        ctx.strokeStyle = "rgb(0, 0, 255)";
                         ctx.beginPath();
                         ctx.moveTo(pos[1][0], pos[1][1]);
                         ctx.lineTo(pos[2][0], pos[2][1]);
@@ -185,7 +187,30 @@
 
                     if (cnt == 4) {
                         ctx.lineWidth = 3;
-                        ctx.strokeStyle = "rgb(0, 255, 0)";
+                        ctx.strokeStyle = "rgb(0, 0, 255)";
+                        ctx.beginPath();
+                        ctx.moveTo(pos[1][0], pos[1][1]);
+                        ctx.lineTo(pos[2][0], pos[2][1]);
+                        ctx.moveTo(pos[2][0], pos[2][1]);
+                        ctx.lineTo(pos[3][0], pos[3][1]);
+                        ctx.moveTo(pos[3][0], pos[3][1]);
+                        ctx.lineTo(pos[4][0], pos[4][1]);
+                        ctx.moveTo(pos[4][0], pos[4][1]);
+                        ctx.lineTo(pos[1][0], pos[1][1]);
+                        ctx.stroke();
+                        cnt = 0;
+                    }
+                }
+
+                if (erase) {
+                    ctx.beginPath();
+                    ctx.arc(stX, stY, 4, 0, Math.PI * 2, true);
+                    ctx.fill();
+                    ctx.closePath();
+
+                    if (cnt == 4) {
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = "rgb(255, 0, 0)";
                         ctx.beginPath();
                         ctx.moveTo(pos[1][0], pos[1][1]);
                         ctx.lineTo(pos[2][0], pos[2][1]);
@@ -379,6 +404,21 @@
                     });
                 }
 
+                if (erase) {
+                    const mapMsg = {
+                        type: "ok_erase",
+                        width: canvas.width,
+                        height: canvas.height,
+                        x: res_x,
+                        y: res_y,
+                        cv_pos: pos,
+                    }
+                    var msg_map = JSON.stringify(mapMsg)
+                    var String_map = new ROSLIB.Message({
+                        data: msg_map,
+                    });
+                }
+
 
 
 
@@ -391,26 +431,46 @@
                 cnt = 0;
                 line = true;
                 square = false;
+                erase = false;
                 document.getElementById("line").style.backgroundColor = "blue";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "white";
+                document.getElementById("all_erase").style.backgroundColor = "white";
             }
 
             function drawSquare() {
                 cnt = 0;
                 square = true;
                 line = false;
+                erase = false;
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "blue";
                 document.getElementById("eraser").style.backgroundColor = "white";
+                document.getElementById("all_erase").style.backgroundColor = "white";
             }
 
-            function erase() {
+            function drawErase() {
+                cnt = 0;
+                erase = true;
                 square = false;
                 line = false;
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "blue";
+                document.getElementById("all_erase").style.backgroundColor = "white";
+
+                //ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function allErase() {
+                cnt = 0;
+                erase = false;
+                square = false;
+                line = false;
+                document.getElementById("line").style.backgroundColor = "white";
+                document.getElementById("square").style.backgroundColor = "white";
+                document.getElementById("eraser").style.backgroundColor = "white";
+                document.getElementById("all_erase").style.backgroundColor = "blue";
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
@@ -418,6 +478,7 @@
             function test() {
                 square = false;
                 line = false;
+                erase = true;
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("test").style.backgroundColor = "blue";
