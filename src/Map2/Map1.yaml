@@ -1,4 +1,4 @@
-image: /home/minji/map_gui/src/Map2/Map1.pgm
+image: /home/minji/map_gui/src/Map2/stMap.pgm
 resolution: 0.025000
 origin: [-23.759342, -37.655976, 0.000000]
 negate: 0

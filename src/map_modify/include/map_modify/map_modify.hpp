@@ -35,9 +35,9 @@ public:
     ros::Publisher pub_pgmsize, occ_pub;
     image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
+    cv::Mat img;
     cv::Mat img_roi, img_origin;
-    cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 1);
+    cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
     nav_msgs::OccupancyGrid pgm_occ;
     int map_width, map_height;
     int map_x, map_y;
@@ -73,10 +73,10 @@ public:
         : it(n)
     {
         initNode();
-        cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
-        cv::Mat img_roi, img_origin;
-        // readMap();
-        //  readPGM(&a);
+        // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
+        // cv::Mat img_roi, img_origin;
+        //  readMap();
+        //   readPGM(&a);
     }
 };
 
@@ -89,14 +89,14 @@ void MODMAP::initNode()
     map_pub = it.advertise("map_pgm", 1);
     map_pub_big = it.advertise("map_big", 1);
     occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
-
+    img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
     ros::Rate loop_rate(10);
     // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_COLOR);
 }
 
 void MODMAP::readMap()
 {
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", 0);
+    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
 
     if (!img.data)
     {
@@ -171,7 +171,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     // map_width = std::stoi(width);
     // map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
-    img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
+    // img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
     img_origin = img.clone();
     cv::Scalar red(0, 0, 255); //지우기
     cv::Scalar green(0, 255, 0);
