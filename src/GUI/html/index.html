@@ -11,30 +11,41 @@
 <body>
     <header>
         <h2>Map Editor</h2>
+
     </header>
+
     <main>
         <div id="src">
+            <div id="info_space">
+                <div id="info">/home/minji/map_gui/src/</div>
+                <input type="text" id="file_path"></input>
+                <button id="find_file" onclick="btn_func(this.id)">file</button>
+            </div>
 
             <div id="main_can">
                 <canvas id="canvas"></canvas>
                 <img id="canvas_img"></img>
+
             </div>
 
+
             <div id="map_size">
-                <button id="plus" onclick="plus()">+</button>
-                <button id="minus" onclick="minus()">-</button>
+                <button id="plus" onclick="plus()">zoom in</button>
+                <button id="minus" onclick="minus()">zoom out</button>
                 <button id="ok" onclick="ok()">OK</button>
             </div>
 
         </div>
         <div id="btn">
+            <span id="load">load and save</span>
             <button id="get_map" onclick="btn_func(this.id)">Get map</button>
-            <button id="save" onclick="btn_func(this.id)">Save</button>
+            <button id="save" onclick="btn_func(this.id)">PGM Save</button>
+            <button id="reset" onclick="btn_func(this.id)">Reset</button>
             <p id="draw">Draw</p>
             <button id="line" onclick="drawLine()">Line</button>
             <button id="square" onclick="drawSquare()">Square</button>
             <button id="eraser" onclick="drawErase()">Eraser</button>
-            <button id="all_erase" onclick="allErase()">remove ALL</button>
+            <button id="all_erase" onclick="allErase()">Display clear</button>
             <div id="map">
                 <canvas id="mini_can"></canvas>
                 <img id="mini_can_img"></img>
@@ -423,6 +434,7 @@
 
 
                 mapPos.publish(String_map);
+                btn_func("get_map");
 
 
             }
@@ -508,6 +520,23 @@
                     console.log("Pub message: ", String_getmap);
                 }
 
+                if (mode == "reset") {
+                    const messages = {
+                        type: mode,
+                        width: mini_can.width,
+                        height: mini_can.height,
+                        x: 10,
+                        y: 10,
+                    }
+                    var messages_str = JSON.stringify(messages)
+                    var String_getmap = new ROSLIB.Message({
+                        data: messages_str,
+                    });
+
+                    ros_func.publish(String_getmap);
+                    console.log("Pub message: ", String_getmap);
+                }
+
                 if (mode == 'save') {
                     console.log('save');
                     const mapMsg = {
@@ -527,6 +556,25 @@
                     console.log("Pub message: ", String_map);
 
 
+                }
+
+                if (mode == "find_file") {
+                    const file_name = document.getElementById("find_file").value;
+                    const mapMsg = {
+                        type: file_name,
+                        width: canvas.width,
+                        height: canvas.height,
+                        x: res_x,
+                        y: res_y,
+                    }
+
+                    var msg_map = JSON.stringify(mapMsg)
+                    var String_map = new ROSLIB.Message({
+                        data: msg_map,
+                    });
+
+                    mapPos.publish(String_map);
+                    console.log("Pub message: ", String_map);
                 }
             }
 

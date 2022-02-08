@@ -36,8 +36,10 @@ public:
     image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     cv::Mat img;
-    cv::Mat img_roi, img_origin;
-    cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
+    cv::Mat img_roi, img_origin, img_reset;
+    std::string file_path = "/home/minji/map_gui/src/";
+    // cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
+    cv::Mat color_img = cv::imread(file_path, 1);
     nav_msgs::OccupancyGrid pgm_occ;
     int map_width, map_height;
     int map_x, map_y;
@@ -89,15 +91,16 @@ void MODMAP::initNode()
     map_pub = it.advertise("map_pgm", 1);
     map_pub_big = it.advertise("map_big", 1);
     occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
-    img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
+    // img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
+    img = cv::imread(file_path, 0);
     ros::Rate loop_rate(10);
     // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_COLOR);
 }
 
 void MODMAP::readMap()
 {
-    cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
-
+    // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
+    cv::Mat img = cv::imread(file_path, 0);
     if (!img.data)
     {
         std::cout << "no" << std::endl;
@@ -173,6 +176,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     float big_size, small_size, resolution, w, h;
     // img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", CV_8UC1);
     img_origin = img.clone();
+    img_reset = img.clone();
     cv::Scalar red(0, 0, 255); //지우기
     cv::Scalar green(0, 255, 0);
     cv::Scalar blue(255, 0, 0); //그리기
@@ -215,6 +219,11 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         std::cout << h << std::endl;
 
         mapPublish(img_origin);
+    }
+
+    if (type == "reset")
+    {
+        img = img_reset;
     }
 
     if (type == "map_draw")
@@ -449,6 +458,11 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
 
         std::cout << "channel" << img.channels() << std::endl;
+    }
+    else
+    {
+        file_path = "/home/minji/map_gui/src/";
+        file_path += type;
     }
 }
 void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)

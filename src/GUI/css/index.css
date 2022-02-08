@@ -55,7 +55,10 @@ main h2 {
 #map_size {
     margin-top: 50px;
     margin-left: 50px;
-
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    margin-left: 480px;
 }
 
 #btn {         
@@ -67,16 +70,18 @@ main h2 {
 }
 #get_map {
     height: 30px;
-    width: 30%;
+    width: 120px;
     margin-top: 20px;
     background-color: white;
+    font-size: medium;
 }
 
 #save {
     height: 30px;
-    width: 30%;
+    width: 120px;
     margin-top: 20px;
     background-color: white;
+    font-size: medium;
 }
 
 #draw {
@@ -85,36 +90,87 @@ main h2 {
 
 #line {
     height: 30px;
-    width: 30%;
-    
+    width: 120px;
+    font-size: medium;
     background-color: white;
 }
 
 #square {
     height: 30px;
-    width: 30%;
+    width: 120px;
     margin-top: 20px;
     background-color: white;
+    font-size: medium;
 }
 
 #eraser {
     height: 30px;
-    width: 30%;
+    width: 120px;
     margin-top: 20px;
     background-color: white;
+    font-size: medium;
 }
 
 #all_erase {
     height: 30px;
-    width: 30%;
+    width: 120px;
     margin-top: 20px;
     background-color: white;
+    font-size: medium;
+}
+
+#plus {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    background-color: white;
+    font-size: medium;
+}
+
+#minus {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    background-color: white;
+    font-size: medium;
+}
+
+#ok {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    background-color: white;
+    font-size: medium;
+}
+
+#info_space {
+    position: fixed;
+    margin-top: 480px;
+    margin-left: 30px;
+   
 }
 
 
-#test {
+#info {
+    font-size: large;
+}
+
+#reset {
     height: 30px;
-    width: 30%;
+    width: 120px;
     margin-top: 20px;
     background-color: white;
+    font-size: medium;
+}
+
+#file_path {
+    height: 30px;
+}
+
+#find_file {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    background-color: white;
+    font-size: medium;
 }
