@@ -17,7 +17,7 @@
     <main>
         <div id="src">
             <div id="info_space">
-                <div id="info">/home/minji/map_gui/src/</div>
+                <div id="info">/home/minji/map_gui/src/data/CoNA/</div>
                 <input type="text" id="file_path"></input>
                 <button id="find_file" onclick="btn_func(this.id)">file</button>
             </div>
@@ -559,13 +559,15 @@
                 }
 
                 if (mode == "find_file") {
-                    const file_name = document.getElementById("find_file").value;
+                    const file_name = document.getElementById("file_path").value;
+                    console.log(file_name);
                     const mapMsg = {
-                        type: file_name,
+                        type: "file",
                         width: canvas.width,
                         height: canvas.height,
                         x: res_x,
                         y: res_y,
+                        file: file_name,
                     }
 
                     var msg_map = JSON.stringify(mapMsg)

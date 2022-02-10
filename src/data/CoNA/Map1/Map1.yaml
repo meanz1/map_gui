@@ -1,0 +1,8 @@
+image: /home/minji/map_gui/src/data/CoNA/Map1/Map1.pgm
+resolution: 0.025000
+origin: [-8.603178, -4.064206, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+initial_pose: [3.524900, 3.058593, 92.516174]
+

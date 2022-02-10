@@ -1,0 +1,42 @@
+{
+    "GUI_v2": {
+        "alert": "alert1",
+        "brightness": 1.0,
+        "light": "on",
+        "map_img_path": "/home/cona/Servinggo/client/build/mapImages/",
+        "music": "music1",
+        "mute": 0,
+        "numDrawers": 1,
+        "numTrays": 3,
+        "param1": "none",
+        "param2": "none",
+        "param3": "none",
+        "param4": "none",
+        "param5": "none",
+        "param6": "none",
+        "pub_state": 1,
+        "voice": "baseFemale",
+        "volume": 26
+    },
+    "gui_v2": {
+        "alert": "alert1",
+        "avoid": "avoid1",
+        "brightness": 1.0,
+        "light": "on",
+        "music": "music1",
+        "mute": 0,
+        "numDrawers": 1,
+        "numTrays": 3,
+        "param1": "none",
+        "param2": "none",
+        "param3": "none",
+        "param4": "none",
+        "param5": "none",
+        "param6": "none",
+        "voice": "baseFemale",
+        "volume": 100
+    },
+    "v4_Robot": {
+        "max_tran_vel": 0.5
+    }
+}

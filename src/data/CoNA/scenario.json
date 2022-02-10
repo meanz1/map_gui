@@ -1,0 +1,96 @@
+{
+    "General": {
+        "sound_path": "default/",
+        "use_LED": 1,
+        "use_error_ems": 1,
+        "use_home_docking": 1,
+        "use_sound": 1,
+        "wait_time_for_obstacle": 10.0
+    },
+    "LED_arrived_home": {
+        "bottom": "0,0,2000,100,255,255",
+        "eye": "0,0,2000,255,255,255",
+        "side": "1,0,2000,0,0,0",
+        "tray_off": "1,0,2000,30,255,30",
+        "tray_on": "3,0,2000,30,255,30"
+    },
+    "LED_arrived_table": {
+        "bottom": "0,0,2000,100,255,255",
+        "eye": "0,0,2000,255,255,255",
+        "side": "1,0,2000,0,0,0",
+        "tray_off": "1,0,2000,30,255,30",
+        "tray_on": "3,0,2000,30,255,30"
+    },
+    "LED_start_navi_to_home": {
+        "bottom": "2,0,2000,100,255,255",
+        "eye": "3,0,2000,255,255,50",
+        "side": "1,0,2000,0,0,0",
+        "tray_off": "1,0,2000,0,0,0",
+        "tray_on": "1,0,2000,0,0,0"
+    },
+    "LED_start_navi_to_table": {
+        "bottom": "2,0,2000,100,255,255",
+        "eye": "3,0,2000,255,255,50",
+        "side": "1,0,2000,0,0,0",
+        "tray_off": "1,0,2000,0,0,0",
+        "tray_on": "1,0,2000,0,0,0"
+    },
+    "Sound_arrived_home": {
+        "path": "arrived_home.wav"
+    },
+    "Sound_arrived_table": {
+        "path": "arrived_table.wav",
+        "use_table_idx": 0
+    },
+    "Sound_cannot_move": {
+        "duration": 30.0,
+        "path": "cannot_move.wav"
+    },
+    "Sound_global_mapping": {
+        "duration": 30.0,
+        "path": "global_mapping.wav"
+    },
+    "Sound_move_to_home": {
+        "duration": 30.0,
+        "path": "move_to_home.wav"
+    },
+    "Sound_move_to_table": {
+        "duration": 30.0,
+        "path": "move_to_table.wav"
+    },
+    "Sound_obstacle_avoid": {
+        "duration": 30.0,
+        "path": "obstacle_avoid.wav"
+    },
+    "Sound_obstacle_stop": {
+        "duration": 30.0,
+        "path": "obstacle_stop.wav"
+    },
+    "Sound_pause": {
+        "duration": 30.0,
+        "path": "pause.wav"
+    },
+    "Sound_resume": {
+        "duration": 30.0,
+        "path": "resume.wav"
+    },
+    "Sound_start_navi_to_home": {
+        "path": "start_navi_to_home.wav"
+    },
+    "Sound_start_navi_to_table": {
+        "path": "start_navi_to_table.wav",
+        "use_table_idx": 0
+    },
+    "Sound_topology_mapping": {
+        "duration": 30.0,
+        "path": "topology_mapping.wav"
+    },
+    "Sound_wait_at_home": {
+        "duration": 30.0,
+        "path": "wait_at_home.wav"
+    },
+    "Sound_wait_at_table": {
+        "duration": 30.0,
+        "path": "wait_at_table.wav"
+    }
+}

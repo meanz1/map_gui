@@ -4,6 +4,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include "std_msgs/Float32MultiArray.h"
+#include <boost/algorithm/string.hpp>
 
 #include <sstream>
 #include <cstdio>
@@ -37,9 +38,10 @@ public:
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     cv::Mat img;
     cv::Mat img_roi, img_origin, img_reset;
-    std::string file_path = "/home/minji/map_gui/src/";
+    std::string file_path = "/home/minji/map_gui/src/data/CoNA/";
     // cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
-    cv::Mat color_img = cv::imread(file_path, 1);
+    // cv::Mat color_img = cv::imread(file_path, 1);
+    cv::Mat color_img;
     nav_msgs::OccupancyGrid pgm_occ;
     int map_width, map_height;
     int map_x, map_y;
@@ -48,12 +50,15 @@ public:
     int threshold_occupied = 65;
     int threshold_free = 25;
     std::mutex mtx;
-    std::string directory_path = "/home/minji/map_gui/src/Map2/";
-    std::string filename = "stMap";
+    // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
+    std::string directory_path;
+    std::string filename = "Map1";
     std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
     std::vector<cv::Point> pointList_square;
     std::vector<cv::Point> pointList_erase;
     cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase;
+    std::vector<std::string> y_;
+
     float m2pixel;
 
     int a = 10;
@@ -92,7 +97,7 @@ void MODMAP::initNode()
     map_pub_big = it.advertise("map_big", 1);
     occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
     // img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
-    img = cv::imread(file_path, 0);
+    // img = cv::imread(file_path, 0);
     ros::Rate loop_rate(10);
     // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_COLOR);
 }
@@ -100,7 +105,7 @@ void MODMAP::initNode()
 void MODMAP::readMap()
 {
     // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
-    cv::Mat img = cv::imread(file_path, 0);
+    // cv::Mat img = cv::imread(file_path, 0);
     if (!img.data)
     {
         std::cout << "no" << std::endl;
@@ -160,6 +165,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     reader.parse(msg->data, root);
     std::cout << root << std::endl;
     std::string type = root["type"].asString(); // get_map
+    std::string f_ = root["file"].asString();   // get_map
     int width = root["width"].asInt();
     int height = root["height"].asInt();
     int x = root["x"].asInt();
@@ -454,15 +460,31 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
     if (type == "save")
     {
+        std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
+        system(y_path.c_str());
         status = "save";
         sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
 
         std::cout << "channel" << img.channels() << std::endl;
     }
-    else
+    if (type == "file")
+
     {
-        file_path = "/home/minji/map_gui/src/";
-        file_path += type;
+
+        file_path += f_;
+
+        std::cout << file_path << std::endl;
+        img = cv::imread(file_path, 0);
+        color_img = cv::imread(file_path, 1);
+
+        std::string yaml_path = f_;
+
+        boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
+        directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
+        std::cout << y_[0] << std::endl;
+        // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
+        // std::cout << y_path << std::endl;
+        // system(y_path.c_str());
     }
 }
 void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
