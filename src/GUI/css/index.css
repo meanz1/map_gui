@@ -6,19 +6,21 @@ html, body {
 
 header {
     height:50px;
-    background-color: rgb(241, 227, 206);
+    background-color: rgb(247, 235, 216);
 }
 
 main {
-    height: 90%;
-    background-color: rgb(241, 227, 206);
+    height: 100%;
+    background-color: rgb(247, 235, 216);
     display: flex;
 }
 
-main h2 {
-    margin-left: 30px;
+#title {
+    margin-left: 50px;
+    padding-top: 30px;
+    font-size: 30px;
+    font-weight: 700;
 }
-
 #canvas {
     margin-left: 30px;
     position: absolute;
@@ -72,75 +74,88 @@ main h2 {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #save {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #draw {
     margin-top: 50px;
+    font-size: 30px;
+    font-weight: 700;
 }
 
 #line {
     height: 30px;
     width: 120px;
-    font-size: medium;
-    background-color: white;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
+   
 }
 
 #square {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #eraser {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+   
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #all_erase {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #plus {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #minus {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #ok {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #info_space {
@@ -152,15 +167,17 @@ main h2 {
 
 
 #info {
-    font-size: large;
+    font-size: 25px;
+    font-weight: 700;
 }
 
 #reset {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
 
 #file_path {
@@ -171,6 +188,31 @@ main h2 {
     height: 30px;
     width: 120px;
     margin-top: 20px;
-    background-color: white;
-    font-size: medium;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
 }
+
+#load {
+    font-size: 30px;
+    font-weight: 700;
+}
+
+button {
+    background-color: white;
+  border-radius: 6px;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 3px 3px 3px #929292;
+}
+
+button:active {
+    box-shadow: none;
+}
+
+
+button:hover {
+   color: #3d3d3d;
+   background-color: rgb(198, 185, 211);
+}
+

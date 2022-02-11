@@ -49,6 +49,10 @@ public:
     float roi_res;
     int threshold_occupied = 65;
     int threshold_free = 25;
+
+    int plus_cnt = 0;
+    int minus_cnt = 0;
+
     std::mutex mtx;
     // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
     std::string directory_path;
@@ -89,7 +93,7 @@ public:
 
 void MODMAP::initNode()
 {
-
+    sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
     sub2 = n.subscribe("/btnInput", 1, &MODMAP::btnCallback, this);
     sub3 = n.subscribe("/btnInput", 1, &MODMAP::jsonCallback, this);
     sub4 = n.subscribe("/mappos", 1, &MODMAP::jsonCallback, this);
@@ -186,6 +190,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     cv::Scalar red(0, 0, 255); //지우기
     cv::Scalar green(0, 255, 0);
     cv::Scalar blue(255, 0, 0); //그리기
+    std::cout << "ooooooooooooooooooooooooooooooo" << std::endl;
     // cv::Point left_top(x, y);
     // cv::Point left_bottom(x, y + 40);
     // cv::Point right_top(x + 40, y);
@@ -208,6 +213,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         h = height;
         std::cout << "second" << std::endl;
     }
+    std::cout << "zzzzzzzzzzzzzzzzzzzzzzzzzz" << std::endl;
     pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
     std_msgs::Float32MultiArray mapsize;
 
@@ -227,11 +233,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         mapPublish(img_origin);
     }
 
-    if (type == "reset")
-    {
-        img = img_reset;
-    }
-
+    std::cout << "why not" << std::endl;
     if (type == "map_draw")
     {
         int er = 0;
@@ -261,12 +263,24 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
     }
 
+    if (type == "map_callback")
+    {
+        std::cout << "call bvackdf tureu??" << std::endl;
+        cv::resize(img_origin, img_origin, cv::Size(w, h));
+        mapPublish(img_origin);
+
+        img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+        cv::resize(img_roi, img_roi, cv::Size(400, 400));
+        mapBigPublish(img_roi);
+    }
+
     if (type == "plus" || type == "minus")
     {
 
         int er = 0;
         if (type == "plus")
         {
+            plus_cnt++;
             try
             {
                 roi_x = roi_x + 10;
@@ -296,6 +310,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
         if (type == "minus")
         {
+            minus_cnt++;
             try
             {
                 roi_x = roi_x - 10;
@@ -453,19 +468,22 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             }
         }
 
-        cv::imshow("h", img);
+        // cv::imshow("h", img);
 
-        cv::waitKey(0);
+        // cv::waitKey(0);
     }
 
     if (type == "save")
     {
+
+        status = "save";
+        //
+        std::cout << status << std::endl;
         std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
         system(y_path.c_str());
-        status = "save";
-        sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
 
-        std::cout << "channel" << img.channels() << std::endl;
+        std::cout << "path" << std::endl;
+        //
     }
     if (type == "file")
 
@@ -489,7 +507,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 }
 void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
 {
-
+    std::cout << "plzddddddddddddddddddddddddddd" << std::endl;
     if (status == "save")
     {
         std::cout << "dddd" << std::endl;
@@ -556,10 +574,12 @@ void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
         }
 
         occ_pub.publish(pgm_occ);
+        std::cout << "finish" << std::endl;
+        mtx.unlock();
+        std::cout << directory_path << std::endl;
+        std::cout << filename << std::endl;
+        MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
     }
-    std::cout << "finish" << std::endl;
-    mtx.unlock();
-    MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
 }
 
 void MODMAP::MapGenerator(std::string dir_path, const std::string &filename_, int threshold_occupied_, int threshold_free_, nav_msgs::OccupancyGrid map)

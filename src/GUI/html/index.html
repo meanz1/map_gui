@@ -10,7 +10,7 @@
 
 <body>
     <header>
-        <h2>Map Editor</h2>
+        <div id="title">Map Editor</div>
 
     </header>
 
@@ -19,7 +19,7 @@
             <div id="info_space">
                 <div id="info">/home/minji/map_gui/src/data/CoNA/</div>
                 <input type="text" id="file_path"></input>
-                <button id="find_file" onclick="btn_func(this.id)">file</button>
+                <button id="find_file" onclick="btn_func(this.id)">OK</button>
             </div>
 
             <div id="main_can">
@@ -30,17 +30,17 @@
 
 
             <div id="map_size">
-                <button id="plus" onclick="plus()">zoom in</button>
-                <button id="minus" onclick="minus()">zoom out</button>
-                <button id="ok" onclick="ok()">OK</button>
+                <button id="plus" onclick="plus()">Zoom in</button>
+                <button id="minus" onclick="minus()">Zoom out</button>
+                <button id="ok" onclick="ok()">Change</button>
             </div>
 
         </div>
         <div id="btn">
-            <span id="load">load and save</span>
+            <span id="load">Load and Save</span>
             <button id="get_map" onclick="btn_func(this.id)">Get map</button>
             <button id="save" onclick="btn_func(this.id)">PGM Save</button>
-            <button id="reset" onclick="btn_func(this.id)">Reset</button>
+            <!--<button id="reset" onclick="btn_func(this.id)">Reset</button>-->
             <p id="draw">Draw</p>
             <button id="line" onclick="drawLine()">Line</button>
             <button id="square" onclick="drawSquare()">Square</button>
@@ -249,14 +249,17 @@
 
 
             function mDown_mini(me) {
-                a = 1.7;
-                b = 1.7;
-                zoom_width = 6.8;
-                zoom_height = 6.8;
+                //a = 4.5;
+                a = resolution * 10;
+                b = resolution * 10;
+                // 참나 이 값이 어떻게 나왔을 까; 
+                //b = 4.5;
+                zoom_width = a * 4;
+                zoom_height = a * 4;
                 miniX = me.offsetX;
                 miniY = me.offsetY;
-                zoom_x = miniX - 3.4;
-                zoom_y = miniY - 3.4;
+                zoom_x = miniX - a * 2;
+                zoom_y = miniY - a * 2;
 
                 mini_can.width = miniarray[0];
                 mini_can.height = miniarray[1];
@@ -434,7 +437,8 @@
 
 
                 mapPos.publish(String_map);
-                btn_func("get_map");
+                btn_func("map_callback");
+                //btn_func("map_draw");
 
 
             }
@@ -444,7 +448,7 @@
                 line = true;
                 square = false;
                 erase = false;
-                document.getElementById("line").style.backgroundColor = "blue";
+                document.getElementById("line").style.backgroundColor = "rgb(198, 185, 211)";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "white";
                 document.getElementById("all_erase").style.backgroundColor = "white";
@@ -456,7 +460,7 @@
                 line = false;
                 erase = false;
                 document.getElementById("line").style.backgroundColor = "white";
-                document.getElementById("square").style.backgroundColor = "blue";
+                document.getElementById("square").style.backgroundColor = "rgb(198, 185, 211)";
                 document.getElementById("eraser").style.backgroundColor = "white";
                 document.getElementById("all_erase").style.backgroundColor = "white";
             }
@@ -468,7 +472,7 @@
                 line = false;
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
-                document.getElementById("eraser").style.backgroundColor = "blue";
+                document.getElementById("eraser").style.backgroundColor = "rgb(198, 185, 211)";
                 document.getElementById("all_erase").style.backgroundColor = "white";
 
                 //ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -482,7 +486,7 @@
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "white";
-                document.getElementById("all_erase").style.backgroundColor = "blue";
+                document.getElementById("all_erase").style.backgroundColor = "rgb(198, 185, 211)";
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
@@ -520,22 +524,22 @@
                     console.log("Pub message: ", String_getmap);
                 }
 
-                if (mode == "reset") {
-                    const messages = {
-                        type: mode,
-                        width: mini_can.width,
-                        height: mini_can.height,
-                        x: 10,
-                        y: 10,
-                    }
-                    var messages_str = JSON.stringify(messages)
-                    var String_getmap = new ROSLIB.Message({
-                        data: messages_str,
-                    });
+                // if (mode == "reset") {
+                //     const messages = {
+                //         type: mode,
+                //         width: mini_can.width,
+                //         height: mini_can.height,
+                //         x: 10,
+                //         y: 10,
+                //     }
+                //     var messages_str = JSON.stringify(messages)
+                //     var String_getmap = new ROSLIB.Message({
+                //         data: messages_str,
+                //     });
 
-                    ros_func.publish(String_getmap);
-                    console.log("Pub message: ", String_getmap);
-                }
+                //     ros_func.publish(String_getmap);
+                //     console.log("Pub message: ", String_getmap);
+                // }
 
                 if (mode == 'save') {
                     console.log('save');
@@ -577,6 +581,22 @@
 
                     mapPos.publish(String_map);
                     console.log("Pub message: ", String_map);
+                }
+                if (mode == "map_callback") {
+                    const messages = {
+                        type: mode,
+                        width: mini_can.width,
+                        height: mini_can.height,
+                        x: mapX,
+                        y: mapY,
+                    }
+                    var messages_str = JSON.stringify(messages)
+                    var String_getmap = new ROSLIB.Message({
+                        data: messages_str,
+                    });
+
+                    ros_func.publish(String_getmap);
+                    console.log("Pub message: ", String_getmap);
                 }
             }
 
