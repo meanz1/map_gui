@@ -72,7 +72,7 @@ public:
     void MapGenerator(std::string dir_path, const std::string &filename, int threshold_occupied, int threshold_free, nav_msgs::OccupancyGrid map);
     int roi_x, roi_y, roi_height;
     float roi_width;
-    void mapCallback(nav_msgs::OccupancyGridConstPtr map);
+    // void mapCallback(nav_msgs::OccupancyGridConstPtr map);
     void readMap();
     // void mapViewCallback()
     void btnCallback(const std_msgs::String::ConstPtr &msg);
@@ -93,15 +93,15 @@ public:
 
 void MODMAP::initNode()
 {
-    sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
+    // sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
     sub2 = n.subscribe("/btnInput", 1, &MODMAP::btnCallback, this);
     sub3 = n.subscribe("/btnInput", 1, &MODMAP::jsonCallback, this);
     sub4 = n.subscribe("/mappos", 1, &MODMAP::jsonCallback, this);
     map_pub = it.advertise("map_pgm", 1);
     map_pub_big = it.advertise("map_big", 1);
-    occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
-    // img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
-    // img = cv::imread(file_path, 0);
+    // occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
+    //  img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
+    //  img = cv::imread(file_path, 0);
     ros::Rate loop_rate(10);
     // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_COLOR);
 }
@@ -477,12 +477,74 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     {
 
         status = "save";
-        //
-        std::cout << status << std::endl;
-        std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
-        system(y_path.c_str());
 
-        std::cout << "path" << std::endl;
+        std::cout << "fssssssssssssssssssssssssss" << std::endl;
+        // std::cout << status << std::endl;
+        // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
+        // system(y_path.c_str());
+
+        // std::cout << "path" << std::endl;
+
+        pgm_occ.info.width = img.cols;
+        pgm_occ.info.height = img.rows;
+        pgm_occ.info.resolution = 0.025000;
+
+        mtx.lock();
+        // for (int i = 0; i < img.cols; i++)
+        // {
+
+        //     for (int j = 0; j < img.rows; j++)
+        //     {
+
+        //         if (color_img.at<cv::Vec3b>(j, i)[0] == 255 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 0)
+        //         {
+        //             pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 100;
+        //         }
+        //         else if (color_img.at<cv::Vec3b>(j, i)[0] == 0 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 0)
+        //         {
+        //             pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 100;
+        //         }
+        //         else if (color_img.at<cv::Vec3b>(j, i)[0] == 0 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 255)
+        //         {
+        //             pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 0;
+        //         }
+        //         else if (color_img.at<cv::Vec3b>(j, i)[0] == 255 && color_img.at<cv::Vec3b>(j, i)[1] == 255 && color_img.at<cv::Vec3b>(j, i)[2] == 255)
+        //         {
+        //             pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 0;
+        //         }
+        //         else
+        //         {
+        //             pgm_occ.data[(img.rows - j - 1) * img.cols + i] = -1;
+        //         }
+
+        //         //여기에 0쓰면 됨이미지랑 비교
+        //     }
+        // }
+
+        for (int i = 0; i < img.rows; i++)
+        {
+
+            for (int j = 0; j < img.cols; j++)
+            {
+
+                if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
+                {
+                    pgm_occ.data[img.cols * i + j] = 100;
+                }
+
+                else if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
+                {
+                    pgm_occ.data[img.cols * i + j] = 0;
+                }
+            }
+        }
+
+        // occ_pub.publish(pgm_occ);
+        std::cout << "finish" << std::endl;
+        mtx.unlock();
+        std::cout << directory_path << std::endl;
+        std::cout << filename << std::endl;
+        MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
         //
     }
     if (type == "file")
@@ -503,48 +565,21 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
         // std::cout << y_path << std::endl;
         // system(y_path.c_str());
-    }
-}
-void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
-{
-    std::cout << "plzddddddddddddddddddddddddddd" << std::endl;
-    if (status == "save")
-    {
-        std::cout << "dddd" << std::endl;
 
-        mtx.lock();
-        pgm_occ.header.frame_id = map->header.frame_id;
-        pgm_occ.header.seq = map->header.seq;
-        pgm_occ.header.stamp = map->header.stamp;
-
-        pgm_occ.info.width = map->info.width;
-        pgm_occ.info.height = map->info.height;
-        pgm_occ.info.resolution = map->info.resolution;
-        pgm_occ.info.map_load_time = map->info.map_load_time;
-
-        pgm_occ.info.origin.position.x = map->info.origin.position.x;
-        pgm_occ.info.origin.position.y = map->info.origin.position.y;
-        pgm_occ.info.origin.position.z = map->info.origin.position.z;
-
-        pgm_occ.info.origin.orientation.x = map->info.origin.orientation.x;
-        pgm_occ.info.origin.orientation.y = map->info.origin.orientation.y;
-        pgm_occ.info.origin.orientation.z = map->info.origin.orientation.z;
-        pgm_occ.info.origin.orientation.w = map->info.origin.orientation.w;
-
-        // pgm_occ.data.resize(pgm_occ.info.width * pgm_occ.info.height);
-        mtx.unlock();
-        mtx.lock();
-        for (int i = 0; i < map->info.height; i++)
+        for (int i = 0; i < img.rows; i++)
         {
-            for (int j = 0; j < map->info.width; j++)
+
+            for (int j = 0; j < img.cols; j++)
             {
-                if (map->data[i * map->info.width + j] == 0)
-                {
-                    pgm_occ.data.push_back(0);
-                }
-                else if (map->data[i * map->info.width + j] == 100)
+
+                if (img.at<uchar>(i, j) == 0)
                 {
                     pgm_occ.data.push_back(100);
+                }
+
+                else if (img.at<uchar>(i, j) == 254)
+                {
+                    pgm_occ.data.push_back(0);
                 }
                 else
                 {
@@ -552,35 +587,96 @@ void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
                 }
             }
         }
-
-        mtx.unlock();
-        mtx.lock();
-        for (int i = 0; i < img.cols; i++)
-        {
-
-            for (int j = 0; j < img.rows; j++)
-            {
-                int j_ = img.cols - j;
-                if (color_img.at<cv::Vec3b>(j, i)[0] == 255 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 0)
-                {
-                    pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 100;
-                }
-                else if (color_img.at<cv::Vec3b>(j, i)[0] == 0 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 255)
-                {
-                    pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 0;
-                }
-                //여기에 0쓰면 됨이미지랑 비교
-            }
-        }
-
-        occ_pub.publish(pgm_occ);
-        std::cout << "finish" << std::endl;
-        mtx.unlock();
-        std::cout << directory_path << std::endl;
-        std::cout << filename << std::endl;
-        MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
     }
 }
+// void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
+// {
+//     std::cout << "plzddddddddddddddddddddddddddd" << std::endl;
+//     if (status == "save")
+//     {
+//         std::cout << "dddd" << std::endl;
+
+//         mtx.lock();
+//         pgm_occ.header.frame_id = map->header.frame_id;
+//         pgm_occ.header.seq = map->header.seq;
+//         pgm_occ.header.stamp = map->header.stamp;
+
+//         pgm_occ.info.width = map->info.width;
+//         pgm_occ.info.height = map->info.height;
+//         pgm_occ.info.resolution = map->info.resolution;
+//         pgm_occ.info.map_load_time = map->info.map_load_time;
+
+//         pgm_occ.info.origin.position.x = map->info.origin.position.x;
+//         pgm_occ.info.origin.position.y = map->info.origin.position.y;
+//         pgm_occ.info.origin.position.z = map->info.origin.position.z;
+
+//         pgm_occ.info.origin.orientation.x = map->info.origin.orientation.x;
+//         pgm_occ.info.origin.orientation.y = map->info.origin.orientation.y;
+//         pgm_occ.info.origin.orientation.z = map->info.origin.orientation.z;
+//         pgm_occ.info.origin.orientation.w = map->info.origin.orientation.w;
+
+//         // pgm_occ.data.resize(pgm_occ.info.width * pgm_occ.info.height);
+//         mtx.unlock();
+//         mtx.lock();
+//         for (int i = 0; i < map->info.height; i++)
+//         {
+//             for (int j = 0; j < map->info.width; j++)
+//             {
+//                 if (map->data[i * map->info.width + j] == 0)
+//                 {
+//                     pgm_occ.data.push_back(0);
+//                 }
+//                 else if (map->data[i * map->info.width + j] == 100)
+//                 {
+//                     pgm_occ.data.push_back(100);
+//                 }
+//                 else
+//                 {
+//                     pgm_occ.data.push_back(-1);
+//                 }
+//             }
+//         }
+
+//         mtx.unlock();
+//         mtx.lock();
+//         for (int i = 0; i < img.cols; i++)
+//         {
+
+//             for (int j = 0; j < img.rows; j++)
+//             {
+//                 int j_ = img.cols - j;
+//                 if (color_img.at<cv::Vec3b>(j, i)[0] == 255 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 0)
+//                 {
+//                     pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 100;
+//                 }
+//                 else if (color_img.at<cv::Vec3b>(j, i)[0] == 0 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 0)
+//                 {
+//                     pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 100;
+//                 }
+//                 else if (color_img.at<cv::Vec3b>(j, i)[0] == 0 && color_img.at<cv::Vec3b>(j, i)[1] == 0 && color_img.at<cv::Vec3b>(j, i)[2] == 255)
+//                 {
+//                     pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 0;
+//                 }
+//                 else if (color_img.at<cv::Vec3b>(j, i)[0] == 255 && color_img.at<cv::Vec3b>(j, i)[1] == 255 && color_img.at<cv::Vec3b>(j, i)[2] == 255)
+//                 {
+//                     pgm_occ.data[(img.rows - j - 1) * img.cols + i] = 0;
+//                 }
+//                 else
+//                 {
+//                     pgm_occ.data[(img.rows - j - 1) * img.cols + i] = -1;
+//                 }
+//                 //여기에 0쓰면 됨이미지랑 비교
+//             }
+//         }
+
+//         occ_pub.publish(pgm_occ);
+//         std::cout << "finish" << std::endl;
+//         mtx.unlock();
+//         std::cout << directory_path << std::endl;
+//         std::cout << filename << std::endl;
+//         MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
+//     }
+// }
 
 void MODMAP::MapGenerator(std::string dir_path, const std::string &filename_, int threshold_occupied_, int threshold_free_, nav_msgs::OccupancyGrid map)
 {
@@ -615,7 +711,8 @@ void MODMAP::MapGenerator(std::string dir_path, const std::string &filename_, in
     {
         for (unsigned int x = 0; x < map.info.width; x++)
         {
-            unsigned int i = x + (map.info.height - y - 1) * map.info.width;
+            // unsigned int i = x + (map.info.height - y - 1) * map.info.width;
+            unsigned int i = y * map.info.width + x;
             if (map.data[i] >= 0 && map.data[i] <= threshold_free_)
             { // [0,free)
                 fputc(254, out);
