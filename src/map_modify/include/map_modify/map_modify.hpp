@@ -558,15 +558,16 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             for (int j = 0; j < img.cols; j++)
             {
 
-                if (img.at<uchar>(i, j) == 0)
+                if (img.at<uchar>(i, j) < 10)
                 {
                     pgm_occ.data.push_back(100);
                 }
 
-                else if (img.at<uchar>(i, j) == 254)
+                else if (img.at<uchar>(i, j) > 245)
                 {
                     pgm_occ.data.push_back(0);
                 }
+
                 else
                 {
                     pgm_occ.data.push_back(-1);
