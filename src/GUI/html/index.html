@@ -17,7 +17,7 @@
     <main>
         <div id="src">
             <div id="info_space">
-                <div id="info">/home/minji/map_gui/src/data/CoNA/</div>
+                <div id="info">/home/data/CoNA/</div>
                 <input type="text" id="file_path"></input>
                 <button id="find_file" onclick="btn_func(this.id)">OK</button>
             </div>
@@ -37,6 +37,14 @@
 
         </div>
         <div id="btn">
+            <div id="ip">
+                <span id="ip_title">IP</span>
+                <input type="text" id="ip_val">
+                <button id="ip_ok" onclick="ip_ok()">ok</button>
+
+                <div id="ip_status"></div>
+            </div>
+
             <span id="load">Load and Save</span>
             <button id="get_map" onclick="btn_func(this.id)">Get map</button>
             <button id="save" onclick="btn_func(this.id)">PGM Save</button>
@@ -55,21 +63,29 @@
         </div>
 
         <script>
+            var ros = new ROSLIB.Ros();
+            var IP;
 
-            var ros = new ROSLIB.Ros({
-                url: 'ws://192.168.50.49:9090'
-            });
+            // var ros = new ROSLIB.Ros({
+            //     url: 'ws://192.168.50.49:9090'
+            // });
 
             ros.on('connection', function () {
+                document.getElementById("ip_status").innerHTML = "success";
+                document.getElementById("ip_status").style.color = "green";
                 console.log('Connected to websocket server');
             })
 
             ros.on('error', function (error) {
                 console.log('error ros server');
+                document.getElementById("ip_status").innerHTML = "error";
+                document.getElementById("ip_status").style.color = "red";
             })
 
             ros.on('close', function () {
                 console.log('Connection to websocket server closed');
+                document.getElementById("ip_status").innerHTML = "close";
+                document.getElementById("ip_status").style.color = "purple";
             })
 
             var canvas = document.getElementById("canvas");
@@ -162,7 +178,11 @@
             }, false);
 
 
+            function ip_ok() {
+                IP = document.getElementById("ip_val").value;
+                ros.connect("ws://" + IP + ":9090");
 
+            }
 
             function mDown(me) {
 
