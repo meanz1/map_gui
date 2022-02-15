@@ -233,7 +233,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         mapPublish(img_origin);
     }
 
-    std::cout << "why not" << std::endl;
     if (type == "map_draw")
     {
         int er = 0;
@@ -263,18 +262,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
     }
 
-    if (type == "map_callback")
-    {
-        std::cout << "call bvackdf tureu??" << std::endl;
-        cv::resize(img_origin, img_origin, cv::Size(w, h));
-        mapPublish(img_origin);
-
-        img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
-        cv::resize(img_roi, img_roi, cv::Size(400, 400));
-        mapBigPublish(img_roi);
-    }
-
-    if (type == "plus" || type == "minus")
+    else if (type == "plus" || type == "minus")
     {
 
         int er = 0;
@@ -308,7 +296,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             }
         }
 
-        if (type == "minus")
+        else if (type == "minus")
         {
             minus_cnt++;
             try
@@ -378,10 +366,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                     {
                         img.at<uchar>(i, j) = 0;
                     }
-                    if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
-                    {
-                        img.at<uchar>(i, j) = 255;
-                    }
                 }
             }
         }
@@ -414,10 +398,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                     if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
                     {
                         img.at<uchar>(i, j) = 0;
-                    }
-                    if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
-                    {
-                        img.at<uchar>(i, j) = 255;
                     }
                 }
             }
@@ -456,10 +436,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             {
                 for (int j = 0; j < color_img.cols; j++)
                 {
-                    if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
-                    {
-                        img.at<uchar>(i, j) = 0;
-                    }
+
                     if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
                     {
                         img.at<uchar>(i, j) = 255;
@@ -468,12 +445,20 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             }
         }
 
+        std::cout << "call bvackdf tureu??" << std::endl;
+        cv::resize(img, img_origin, cv::Size(w, h));
+        mapPublish(img_origin);
+
+        img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+        cv::resize(img_roi, img_roi, cv::Size(400, 400));
+        mapBigPublish(img_roi);
+
         // cv::imshow("h", img);
 
         // cv::waitKey(0);
     }
 
-    if (type == "save")
+    else if (type == "save")
     {
 
         status = "save";
@@ -489,7 +474,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         pgm_occ.info.height = img.rows;
         pgm_occ.info.resolution = 0.025000;
 
-        mtx.lock();
         // for (int i = 0; i < img.cols; i++)
         // {
 
@@ -541,13 +525,13 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
         // occ_pub.publish(pgm_occ);
         std::cout << "finish" << std::endl;
-        mtx.unlock();
+
         std::cout << directory_path << std::endl;
         std::cout << filename << std::endl;
         MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
         //
     }
-    if (type == "file")
+    else if (type == "file")
 
     {
 

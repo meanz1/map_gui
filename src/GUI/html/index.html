@@ -403,7 +403,7 @@
                     });
                 }
 
-                if (square) {
+                else if (square) {
                     const mapMsg = {
                         type: "ok_square",
                         width: canvas.width,
@@ -418,7 +418,7 @@
                     });
                 }
 
-                if (erase) {
+                else if (erase) {
                     const mapMsg = {
                         type: "ok_erase",
                         width: canvas.width,
@@ -437,7 +437,17 @@
 
 
                 mapPos.publish(String_map);
-                btn_func("map_callback");
+                cnt = 0;
+                erase = false;
+                square = false;
+                line = false;
+                document.getElementById("line").style.backgroundColor = "white";
+                document.getElementById("square").style.backgroundColor = "white";
+                document.getElementById("eraser").style.backgroundColor = "white";
+                document.getElementById("all_erase").style.backgroundColor = "white";
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                //btn_func("map_callback");
                 //btn_func("map_draw");
 
 
