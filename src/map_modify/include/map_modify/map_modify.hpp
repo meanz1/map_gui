@@ -38,7 +38,8 @@ public:
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     cv::Mat img;
     cv::Mat img_roi, img_origin, img_reset;
-    std::string file_path = "/home/minji/map_gui/src/data/CoNA/";
+    // std::string file_path = "/home/minji/map_gui/src/data/CoNA/";
+    std::string file_path = "/home/cona/data/CoNA/";
     // cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
     // cv::Mat color_img = cv::imread(file_path, 1);
     cv::Mat color_img;
@@ -544,7 +545,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         std::string yaml_path = f_;
 
         boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
-        directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
+        // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
+        directory_path = "/home/cona/data/CoNA/" + y_[0] + "/";
         std::cout << y_[0] << std::endl;
         // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
         // std::cout << y_path << std::endl;
