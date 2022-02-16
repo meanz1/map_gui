@@ -583,7 +583,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     {
         std::stringstream ss;
         file_path += f_;
-
+        ss.clear();
         std::cout << file_path << std::endl;
         img = cv::imread(file_path, 0);
         color_img = cv::imread(file_path, 1);
