@@ -542,36 +542,43 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         img = cv::imread(file_path, 0);
         color_img = cv::imread(file_path, 1);
 
-        std::string yaml_path = f_;
-
-        boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
-        // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
-        directory_path = "/home/cona/data/CoNA/" + y_[0] + "/";
-        std::cout << y_[0] << std::endl;
-        // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
-        // std::cout << y_path << std::endl;
-        // system(y_path.c_str());
-
-        for (int i = 0; i < img.rows; i++)
+        if (!img.empty())
         {
+            std::string yaml_path = f_;
 
-            for (int j = 0; j < img.cols; j++)
+            boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
+            // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
+            directory_path = "/home/cona/data/CoNA/" + y_[0] + "/";
+            std::cout << y_[0] << std::endl;
+            // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
+            // std::cout << y_path << std::endl;
+            // system(y_path.c_str());
+
+            for (int i = 0; i < img.rows; i++)
             {
-                if (img.at<uchar>(i, j) <= 110)
-                {
-                    pgm_occ.data.push_back(100);
-                }
 
-                else if (img.at<uchar>(i, j) <= 220)
+                for (int j = 0; j < img.cols; j++)
                 {
-                    pgm_occ.data.push_back(-1);
-                }
+                    if (img.at<uchar>(i, j) <= 110)
+                    {
+                        pgm_occ.data.push_back(100);
+                    }
 
-                else
-                {
-                    pgm_occ.data.push_back(0);
+                    else if (img.at<uchar>(i, j) <= 220)
+                    {
+                        pgm_occ.data.push_back(-1);
+                    }
+
+                    else
+                    {
+                        pgm_occ.data.push_back(0);
+                    }
                 }
             }
+        }
+        else
+        {
+            std::cout << "image empty !! " << std::endl;
         }
     }
 }
