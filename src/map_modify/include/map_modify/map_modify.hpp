@@ -33,7 +33,7 @@ public:
     ros::NodeHandle n;
     image_transport::ImageTransport it;
     ros::Subscriber sub, sub2, sub3, sub4;
-    ros::Publisher pub_pgmsize, occ_pub;
+    ros::Publisher pub_pgmsize, occ_pub, file_load;
     image_transport::Publisher map_pub, map_pub_big;
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     cv::Mat img;
@@ -53,7 +53,8 @@ public:
 
     int plus_cnt = 0;
     int minus_cnt = 0;
-
+    std_msgs::String load_msg;
+    std::stringstream ss;
     std::mutex mtx;
     // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
     std::string directory_path;
@@ -100,6 +101,7 @@ void MODMAP::initNode()
     sub4 = n.subscribe("/mappos", 1, &MODMAP::jsonCallback, this);
     map_pub = it.advertise("map_pgm", 1);
     map_pub_big = it.advertise("map_big", 1);
+    file_load = n.advertise<std_msgs::String>("file_load", 1);
     // occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
     //  img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
     //  img = cv::imread(file_path, 0);
@@ -216,6 +218,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     }
     std::cout << "zzzzzzzzzzzzzzzzzzzzzzzzzz" << std::endl;
     pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
+
     std_msgs::Float32MultiArray mapsize;
 
     if (type == "get_map")
@@ -544,6 +547,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
         if (!img.empty())
         {
+            ss << "success";
             std::string yaml_path = f_;
 
             boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
@@ -580,7 +584,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         {
             std::cout << "image empty !! " << std::endl;
             file_path = "/home/cona/data/CoNA/";
+            ss << "fail";
         }
+        load_msg.data = ss.str();
+        file_load.publish(load_msg);
     }
 }
 // void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)

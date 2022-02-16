@@ -20,6 +20,7 @@
                 <div id="info">/home/data/CoNA/</div>
                 <input type="text" id="file_path"></input>
                 <button id="find_file" onclick="btn_func(this.id)">OK</button>
+                <span id="file_load">no file</span>
             </div>
 
             <div id="main_can">
@@ -140,6 +141,12 @@
                 messageType: "std_msgs/Float32MultiArray",
             })
 
+            var load_status = new ROSLIB.Topic({
+                ros: ros,
+                name: "/file_load",
+                messageType: "std_msgs/String"
+            })
+
             var mapPos = new ROSLIB.Topic({
                 ros: ros,
                 name: "/mappos",
@@ -167,6 +174,10 @@
                 mini_can.height = m.data[1];
                 resolution = m.data[2];
 
+            })
+
+            load_status.subscribe((m) => {
+                console.log(m.data);
             })
 
             canvas.addEventListener("mousedown", function (me) {

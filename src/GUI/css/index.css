@@ -213,6 +213,11 @@ main {
     color: #3d3d3d;
 }
 
+#file_load {
+    margin-left: 20px;
+    font-size: large;
+}
+
 #load {
     margin-top: 30px;
     font-size: 30px;
