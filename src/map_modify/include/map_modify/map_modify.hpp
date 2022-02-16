@@ -579,6 +579,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         else
         {
             std::cout << "image empty !! " << std::endl;
+            file_path = "/home/cona/data/CoNA/";
         }
     }
 }
