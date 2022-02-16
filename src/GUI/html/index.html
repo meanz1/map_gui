@@ -178,6 +178,13 @@
 
             load_status.subscribe((m) => {
                 console.log(m.data);
+                document.getElementById("file_load").innerHTML = m.data;
+                if (m.data == "success") {
+                    document.getElementById("file_load").style.color = "green";
+                }
+                else {
+                    document.getElementById("file_load").style.color = "red";
+                }
             })
 
             canvas.addEventListener("mousedown", function (me) {

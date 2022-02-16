@@ -54,7 +54,7 @@ public:
     int plus_cnt = 0;
     int minus_cnt = 0;
     std_msgs::String load_msg;
-    std::stringstream ss;
+
     std::mutex mtx;
     // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
     std::string directory_path;
@@ -62,7 +62,7 @@ public:
     std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
     std::vector<cv::Point> pointList_square;
     std::vector<cv::Point> pointList_erase;
-    cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase;
+    cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase, square;
     std::vector<std::string> y_;
 
     float m2pixel;
@@ -374,16 +374,56 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             }
         }
 
+        // else if (type == "ok_square")
+        // {
+        //     for (int i = 1; i < 5; i++)
+        //     {
+        //         sqr.x = Position[i][0].asInt() * roi_res;
+        //         sqr.x += x;
+        //         sqr.y = Position[i][1].asInt() * roi_res;
+        //         sqr.y += y;
+        //         pointList_square.push_back(sqr);
+        //     }
+
+        //     for (int j = 1; j < pointList_square.size() + 1; j++)
+        //     {
+        //         square_j = j;
+        //         if (j % 4 == 0)
+        //         {
+        //             square_j -= 4;
+        //         }
+        //         cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], blue);
+        //     }
+
+        //     for (int i = 0; i < color_img.rows; i++)
+        //     {
+        //         for (int j = 0; j < color_img.cols; j++)
+        //         {
+        //             if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
+        //             {
+        //                 img.at<uchar>(i, j) = 0;
+        //             }
+        //         }
+        //     }
+        // }
         else if (type == "ok_square")
         {
+            int square_np[] = {4};
+            cv::Point square_points[1][4];
+
             for (int i = 1; i < 5; i++)
             {
-                sqr.x = Position[i][0].asInt() * roi_res;
-                sqr.x += x;
-                sqr.y = Position[i][1].asInt() * roi_res;
-                sqr.y += y;
-                pointList_square.push_back(sqr);
+                square.x = Position[i][0].asInt() * roi_res;
+                square.x += x;
+                square.y = Position[i][1].asInt() * roi_res;
+                square.y += y;
+                pointList_square.push_back(square);
             }
+
+            square_points[0][0] = pointList_square[pointList_square.size() - 4];
+            square_points[0][1] = pointList_square[pointList_square.size() - 3];
+            square_points[0][2] = pointList_square[pointList_square.size() - 2];
+            square_points[0][3] = pointList_square[pointList_square.size() - 1];
 
             for (int j = 1; j < pointList_square.size() + 1; j++)
             {
@@ -392,13 +432,16 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 {
                     square_j -= 4;
                 }
-                cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], blue);
+                cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], blue, 1);
             }
 
+            const cv::Point *sppt[1] = {square_points[0]};
+            cv::fillPoly(color_img, sppt, square_np, 1, blue, 8);
             for (int i = 0; i < color_img.rows; i++)
             {
                 for (int j = 0; j < color_img.cols; j++)
                 {
+
                     if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
                     {
                         img.at<uchar>(i, j) = 0;
@@ -538,7 +581,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     else if (type == "file")
 
     {
-
+        std::stringstream ss;
         file_path += f_;
 
         std::cout << file_path << std::endl;
