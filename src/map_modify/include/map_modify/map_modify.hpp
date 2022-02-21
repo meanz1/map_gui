@@ -39,7 +39,7 @@ public:
     cv::Mat img;
     cv::Mat img_roi, img_origin, img_reset;
     // std::string file_path = "/home/minji/map_gui/src/data/CoNA/";
-    std::string file_path = "/home/cona/data/CoNA/";
+    std::string file_path = "/home/cona/data/";
     // cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
     // cv::Mat color_img = cv::imread(file_path, 1);
     cv::Mat color_img;
@@ -198,6 +198,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     // cv::Point left_bottom(x, y + 40);
     // cv::Point right_top(x + 40, y);
     // cv::Point right_bottom(x + 40, y + 40);
+    
     if (img.cols >= img.rows)
     {
         big_size = img.cols;
@@ -581,6 +582,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     else if (type == "file")
 
     {
+        
+        
         std::stringstream ss;
         file_path += f_;
         ss.str("");
@@ -588,6 +591,28 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         img = cv::imread(file_path, 0);
         color_img = cv::imread(file_path, 1);
 
+        img_origin = img.clone();
+        img_reset = img.clone();
+
+        if (img.cols >= img.rows)
+        {
+            big_size = img.cols;
+            small_size = img.rows;
+            resolution = width / big_size;
+            w = width;
+            h = small_size * resolution;
+            std::cout << "first" << std::endl;
+        }
+        else
+        {
+            big_size = img.rows;
+            small_size = img.cols;
+            resolution = height / big_size;
+            w = small_size * resolution;
+            h = height;
+            std::cout << "second" << std::endl;
+        }
+        
         if (!img.empty())
         {
             ss << "success";
@@ -595,8 +620,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
             boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
             // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
-            directory_path = "/home/cona/data/CoNA/" + y_[0] + "/";
+            directory_path = "/home/cona/data/" + y_[0] + "/"+y_[1]+"/";
             std::cout << y_[0] << std::endl;
+             std::cout << y_[1] << std::endl;
+              std::cout << y_[2] << std::endl;
             // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
             // std::cout << y_path << std::endl;
             // system(y_path.c_str());
@@ -626,11 +653,24 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         else
         {
             std::cout << "image empty !! " << std::endl;
-            file_path = "/home/cona/data/CoNA/";
+            file_path = "/home/cona/data/";
             ss << "fail";
         }
-        load_msg.data = ss.str();
-        file_load.publish(load_msg);
+        //load_msg.data = ss.str();
+        //file_load.publish(load_msg);
+
+        mapsize.data.push_back(w);
+        mapsize.data.push_back(h);
+        mapsize.data.push_back(resolution);
+        std::cout << mapsize << std::endl;
+
+        pub_pgmsize.publish(mapsize);
+        cv::resize(img_origin, img_origin, cv::Size(w, h));
+        std::cout << resolution << std::endl;
+        std::cout << w << std::endl;
+        std::cout << h << std::endl;
+
+        mapPublish(img_origin);
     }
 }
 // void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
