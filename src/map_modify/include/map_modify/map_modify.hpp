@@ -282,13 +282,15 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 roi_width = roi_width - 2 * a;
                 b = 10;
                 er = 7;
+                if(roi_x <= 0 || roi_y<=0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
+                {
+                    std::cout << "bbbbb" << std::endl;
+                    throw er;
+                }
                 img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
                 cv::resize(img_roi, img_roi, cv::Size(400, 400));
                 // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
-                if (roi_x + 40 - a > img.cols || roi_y + 40 - a > img.rows)
-                {
-                    throw er;
-                }
+                
 
                 mapBigPublish(img_roi);
                 // a += 10;
