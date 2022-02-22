@@ -312,13 +312,18 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 roi_width = roi_width + 2 * b;
                 a = 10;
                 er = 9;
-                img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
-                cv::resize(img_roi, img_roi, cv::Size(400, 400));
-                // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
-                if (roi_x + 40 + b > img.cols || roi_y + 40 + b > img.rows)
+                if(roi_x <= 0 || roi_y<=0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
                 {
                     throw er;
                 }
+                img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+                cv::resize(img_roi, img_roi, cv::Size(400, 400));
+                // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
+                // if (roi_x + 40 + b > img.cols || roi_y + 40 + b > img.rows)
+                // {
+                //     throw er;
+                // }
+                
                 std::cout << roi_x << std::endl;
                 std::cout << roi_y << std::endl;
                 std::cout << roi_width << std::endl;
