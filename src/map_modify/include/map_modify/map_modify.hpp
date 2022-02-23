@@ -50,7 +50,7 @@ public:
     float roi_res;
     int threshold_occupied = 65;
     int threshold_free = 25;
-
+    bool minus_switch;
     int plus_cnt = 0;
     int minus_cnt = 0;
     std_msgs::String load_msg;
@@ -175,7 +175,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     std::string f_ = root["file"].asString();   // get_map
 
     std::string local_file_path = file_path + f_;
-
+    minus_switch = false;
     int width = root["width"].asInt();
     int height = root["height"].asInt();
     int x = root["x"].asInt();
@@ -274,7 +274,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     {
 
         int er = 0;
-        if (type == "plus")
+        if (type == "plus" && minus_switch == true)
         {
             plus_cnt++;
             try
@@ -305,7 +305,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             }
         }
 
-        else if (type == "minus")
+        else if (type == "minus" && minus_switch == false)
         {
             minus_cnt++;
             try
@@ -317,6 +317,16 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 roi_width = roi_width + 2 * b;
                 a = 10;
                 er = 9;
+
+                if (roi_height < 40)
+                {
+                    minus_switch = false;
+                }
+                else
+                {
+                    minus_switch = true;
+                }
+
                 if (roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
                 {
                     std::cout << "bbbbb" << std::endl;
