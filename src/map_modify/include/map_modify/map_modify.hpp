@@ -250,6 +250,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         try
         {
             er = 5;
+            if (x <= 0 || y <= 0 || x + 40 > img.cols || y + 40 > img.rows)
+            {
+                throw er;
+            }
             img_roi = img(cv::Rect(x, y, 40, 40));
             cv::resize(img_roi, img_roi, cv::Size(400, 400));
             std::cout << img_roi.channels() << std::endl;
@@ -257,10 +261,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             roi_y = y;
             roi_height = 40;
             roi_width = 40;
-            if (roi_x <= 0 || roi_y <= 0 || roi_x + 40 > img.cols || roi_y + 40 > img.rows)
-            {
-                throw er;
-            }
 
             mapBigPublish(img_roi);
         }
