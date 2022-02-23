@@ -285,7 +285,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 roi_width = roi_width - 2 * a;
                 b = 10;
                 er = 7;
-                if (roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
+                if (roi_height < 40 || roi_width < 40 || roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
                 {
                     std::cout << "bbbbb" << std::endl;
                     throw er;
