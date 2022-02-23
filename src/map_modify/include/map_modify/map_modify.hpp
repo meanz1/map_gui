@@ -173,6 +173,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     std::cout << root << std::endl;
     std::string type = root["type"].asString(); // get_map
     std::string f_ = root["file"].asString();   // get_map
+
+    std::string local_file_path = file_path + f_;
+
     int width = root["width"].asInt();
     int height = root["height"].asInt();
     int x = root["x"].asInt();
@@ -198,7 +201,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     // cv::Point left_bottom(x, y + 40);
     // cv::Point right_top(x + 40, y);
     // cv::Point right_bottom(x + 40, y + 40);
-    
+
     if (img.cols >= img.rows)
     {
         big_size = img.cols;
@@ -254,7 +257,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             roi_y = y;
             roi_height = 40;
             roi_width = 40;
-            if (x + 40 > img.cols || y + 40 > img.rows)
+            if (roi_x <= 0 || roi_y <= 0 || roi_x + 40 > img.cols || roi_y + 40 > img.rows)
             {
                 throw er;
             }
@@ -282,7 +285,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 roi_width = roi_width - 2 * a;
                 b = 10;
                 er = 7;
-                if(roi_x <= 0 || roi_y<=0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
+                if (roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
                 {
                     std::cout << "bbbbb" << std::endl;
                     throw er;
@@ -290,7 +293,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
                 cv::resize(img_roi, img_roi, cv::Size(400, 400));
                 // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
-                
 
                 mapBigPublish(img_roi);
                 // a += 10;
@@ -315,7 +317,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 roi_width = roi_width + 2 * b;
                 a = 10;
                 er = 9;
-                if(roi_x <= 0 || roi_y<=0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
+                if (roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
                 {
                     std::cout << "bbbbb" << std::endl;
                     throw er;
@@ -327,7 +329,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 // {
                 //     throw er;
                 // }
-                
+
                 std::cout << roi_x << std::endl;
                 std::cout << roi_y << std::endl;
                 std::cout << roi_width << std::endl;
@@ -591,14 +593,14 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     else if (type == "file")
 
     {
-        
-        
+
         std::stringstream ss;
-        file_path += f_;
+        //file_path += f_;
         ss.str("");
         std::cout << file_path << std::endl;
-        img = cv::imread(file_path, 0);
-        color_img = cv::imread(file_path, 1);
+        std::cout << local_file_path << std::endl;
+        img = cv::imread(local_file_path, 0);
+        color_img = cv::imread(local_file_path, 1);
 
         img_origin = img.clone();
         img_reset = img.clone();
@@ -621,7 +623,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             h = height;
             std::cout << "second" << std::endl;
         }
-        
+
         if (!img.empty())
         {
             ss << "success";
@@ -629,10 +631,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
             boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
             // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
-            directory_path = "/home/cona/data/" + y_[0] + "/"+y_[1]+"/";
+            directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
             std::cout << y_[0] << std::endl;
-             std::cout << y_[1] << std::endl;
-              std::cout << y_[2] << std::endl;
+            std::cout << y_[1] << std::endl;
+            std::cout << y_[2] << std::endl;
             // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
             // std::cout << y_path << std::endl;
             // system(y_path.c_str());
