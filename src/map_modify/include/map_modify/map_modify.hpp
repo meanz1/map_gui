@@ -58,13 +58,13 @@ public:
     std::mutex mtx;
     // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
     std::string directory_path;
-    std::string filename = "Map1";
+    std::string filename;
     std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
     std::vector<cv::Point> pointList_square;
     std::vector<cv::Point> pointList_erase;
     cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase, square;
     std::vector<std::string> y_;
-
+    std::vector<std::string> name_parsing;
     float m2pixel;
 
     int a = 10;
@@ -636,11 +636,15 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             std::string yaml_path = f_;
 
             boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
+            boost::split(name_parsing, y_[2], boost::is_any_of("."), boost::algorithm::token_compress_on);
             // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
             directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
             std::cout << y_[0] << std::endl;
             std::cout << y_[1] << std::endl;
             std::cout << y_[2] << std::endl;
+            filename = name_parsing[0];
+            std::cout<<name_parsing[0]<<std::endl;
+            
             // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
             // std::cout << y_path << std::endl;
             // system(y_path.c_str());
