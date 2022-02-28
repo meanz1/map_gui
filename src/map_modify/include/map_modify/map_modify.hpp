@@ -59,9 +59,7 @@ public:
     // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
     std::string directory_path;
     std::string filename;
-    std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
-    std::vector<cv::Point> pointList_square;
-    std::vector<cv::Point> pointList_erase;
+    
     cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase, square;
     std::vector<std::string> y_;
     std::vector<std::string> name_parsing;
@@ -354,7 +352,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
     if (type == "ok_line" || type == "ok_square" || type == "ok_erase")
     {
-
+        std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
+        std::vector<cv::Point> pointList_square;
+        std::vector<cv::Point> pointList_erase;
         if (type == "ok_line")
         {
             center.x = x;
@@ -392,38 +392,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             }
         }
 
-        // else if (type == "ok_square")
-        // {
-        //     for (int i = 1; i < 5; i++)
-        //     {
-        //         sqr.x = Position[i][0].asInt() * roi_res;
-        //         sqr.x += x;
-        //         sqr.y = Position[i][1].asInt() * roi_res;
-        //         sqr.y += y;
-        //         pointList_square.push_back(sqr);
-        //     }
-
-        //     for (int j = 1; j < pointList_square.size() + 1; j++)
-        //     {
-        //         square_j = j;
-        //         if (j % 4 == 0)
-        //         {
-        //             square_j -= 4;
-        //         }
-        //         cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], blue);
-        //     }
-
-        //     for (int i = 0; i < color_img.rows; i++)
-        //     {
-        //         for (int j = 0; j < color_img.cols; j++)
-        //         {
-        //             if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
-        //             {
-        //                 img.at<uchar>(i, j) = 0;
-        //             }
-        //         }
-        //     }
-        // }
         else if (type == "ok_square")
         {
             int square_np[] = {4};
