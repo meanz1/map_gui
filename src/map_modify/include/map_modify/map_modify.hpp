@@ -350,6 +350,33 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
     }
 
+    else if (type == "up" || type == "down" || type == "right" || type == "left") {
+        // if (type == "up") {
+        //     std::cout << "up" << std::endl;
+        //     roi_x = x;
+        //     roi_y = y;
+        //     img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+        //     cv::resize(img_roi, img_roi, cv::Size(400, 400));
+        // }
+        // else if (type == "down") {
+        //     std::cout << "down" << std::endl;
+        // }
+        // else if (type == "right") {
+        //     std::cout << "right" << std::endl;
+        // }
+        // else {
+        //     std::cout << "left" << std::endl;
+        // }
+
+        roi_x = x;
+        roi_y = y;
+        img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+        cv::resize(img_roi, img_roi, cv::Size(400, 400));
+        mapBigPublish(img_roi);
+    }
+
+
+
     if (type == "ok_line" || type == "ok_square" || type == "ok_erase")
     {
         std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
