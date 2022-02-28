@@ -367,7 +367,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         // else {
         //     std::cout << "left" << std::endl;
         // }
-
+        std::cout<<type<<std::endl;
         roi_x = x;
         roi_y = y;
         img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
