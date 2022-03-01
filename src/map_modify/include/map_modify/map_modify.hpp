@@ -367,9 +367,11 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         // else {
         //     std::cout << "left" << std::endl;
         // }
-        std::cout<<type<<std::endl;
+        
         roi_x = x;
         roi_y = y;
+        std::cout<<"roi_w : "<<roi_width << std::endl;
+        std::cout<<"roi_h : "<<roi_height << std::endl;
         img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
         cv::resize(img_roi, img_roi, cv::Size(400, 400));
         mapBigPublish(img_roi);
