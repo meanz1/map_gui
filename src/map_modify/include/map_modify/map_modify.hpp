@@ -351,30 +351,19 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     }
 
     else if (type == "up" || type == "down" || type == "right" || type == "left") {
-        // if (type == "up") {
-        //     std::cout << "up" << std::endl;
-        //     roi_x = x;
-        //     roi_y = y;
-        //     img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
-        //     cv::resize(img_roi, img_roi, cv::Size(400, 400));
-        // }
-        // else if (type == "down") {
-        //     std::cout << "down" << std::endl;
-        // }
-        // else if (type == "right") {
-        //     std::cout << "right" << std::endl;
-        // }
-        // else {
-        //     std::cout << "left" << std::endl;
-        // }
         
         roi_x = x;
         roi_y = y;
-        std::cout<<"roi_w : "<<roi_width << std::endl;
-        std::cout<<"roi_h : "<<roi_height << std::endl;
-        img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
-        cv::resize(img_roi, img_roi, cv::Size(400, 400));
-        mapBigPublish(img_roi);
+        
+        if(roi_x >= 0 && roi_x + roi_width <= img.cols && roi_y >= 0 && roi_y + roi_height <= img.rows) {
+            std::cout<<"roi_w : "<<roi_width << std::endl;
+            std::cout<<"roi_h : "<<roi_height << std::endl;
+            img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
+            cv::resize(img_roi, img_roi, cv::Size(400, 400));
+            mapBigPublish(img_roi);
+        }
+   
+        
     }
 
 
