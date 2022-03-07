@@ -38,8 +38,8 @@ public:
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     cv::Mat img;
     cv::Mat img_roi, img_origin, img_reset;
-    // std::string file_path = "/home/minji/map_gui/src/data/CoNA/";
-    std::string file_path = "/home/cona/data/";
+    std::string file_path = "/home/minji/map_gui/src/data/CoNA/";
+    // std::string file_path = "/home/cona/data/";
     // cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
     // cv::Mat color_img = cv::imread(file_path, 1);
     cv::Mat color_img;
@@ -618,7 +618,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         else
         {
             std::cout << "image empty !! " << std::endl;
-            file_path = "/home/cona/data/";
+            // file_path = "/home/cona/data/";
+            file_path = "/home/minji/map_gui/src/data/CoNA/";
             ss << "fail";
         }
         // load_msg.data = ss.str();
