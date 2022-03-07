@@ -38,13 +38,7 @@
 
         </div>
         <div id="btn">
-            <div id="ip">
-                <span id="ip_title">IP</span>
-                <input type="text" id="ip_val">
-                <button id="ip_ok" onclick="ip_ok()">ok</button>
-
-                <div id="ip_status">no connection</div>
-            </div>
+            
 
             <span id="load">Load and Save</span>
             <button id="get_map" onclick="btn_func(this.id)">Get map</button>
@@ -64,8 +58,9 @@
         </div>
 
         <script>
-            var ros = new ROSLIB.Ros();
-            var IP;
+            var ros = new ROSLIB.Ros({
+                url: "ws://localhost:9090",
+            });
 
             // var ros = new ROSLIB.Ros({
             //     url: 'ws://192.168.50.49:9090'
@@ -194,13 +189,6 @@
             mini_can.addEventListener("mousedown", function (me) {
                 mDown_mini(me)
             }, false);
-
-
-            function ip_ok() {
-                IP = document.getElementById("ip_val").value;
-                ros.connect("ws://" + IP + ":9090");
-
-            }
 
             function mDown(me) {
 
