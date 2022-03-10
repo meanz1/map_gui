@@ -34,11 +34,12 @@
                 <button id="plus" onclick="plus()">Zoom in</button>
                 <button id="minus" onclick="minus()">Zoom out</button>
                 <button id="ok" onclick="ok()">Change</button>
+                <button id="path" onclick="path()">Path</button>
             </div>
 
         </div>
         <div id="btn">
-            
+
 
             <span id="load">Load and Save</span>
             <button id="get_map" onclick="btn_func(this.id)">Get map</button>
@@ -67,21 +68,18 @@
             // });
 
             ros.on('connection', function () {
-                document.getElementById("ip_status").innerHTML = "success";
-                document.getElementById("ip_status").style.color = "green";
+
                 console.log('Connected to websocket server');
             })
 
             ros.on('error', function (error) {
                 console.log('error ros server');
-                document.getElementById("ip_status").innerHTML = "error";
-                document.getElementById("ip_status").style.color = "red";
+
             })
 
             ros.on('close', function () {
                 console.log('Connection to websocket server closed');
-                document.getElementById("ip_status").innerHTML = "close";
-                document.getElementById("ip_status").style.color = "purple";
+
             })
 
             var canvas = document.getElementById("canvas");
@@ -170,6 +168,12 @@
                 resolution = m.data[2];
 
             })
+
+            var loadPath = new ROSLIB.Topic({
+                ros: ros,
+                name: "/path",
+                messageType: "std_msgs/String",
+            });
 
             load_status.subscribe((m) => {
                 console.log(m.data);
@@ -477,6 +481,25 @@
                 //btn_func("map_draw");
 
 
+            }
+
+            function path() {
+                const mapMsg = {
+                    type: "path",
+                    width: canvas.width,
+                    height: canvas.height,
+                    x: res_x,
+                    y: res_y,
+
+                }
+
+                var msg_map = JSON.stringify(mapMsg)
+                var String_map = new ROSLIB.Message({
+                    data: msg_map,
+                });
+
+                mapPos.publish(String_map);
+                console.log(msg_map);
             }
 
             function drawLine() {

@@ -38,7 +38,7 @@ public:
     cv::Mat Mapimage, globalMap, EditedMap, MergedMap, FilteredMap, Map4path;
     cv::Mat img;
     cv::Mat img_roi, img_origin, img_reset;
-    std::string file_path = "/home/minji/map_gui/src/data/CoNA/";
+    std::string file_path = "/home/minji/a/map_gui/src/data/CoNA/";
     // std::string file_path = "/home/cona/data/";
     // cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
     // cv::Mat color_img = cv::imread(file_path, 1);
@@ -62,8 +62,16 @@ public:
 
     cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase, square;
     std::vector<std::string> y_;
+    std::vector<std::string> yaml;
+    std::vector<std::string> origin_value;
     std::vector<std::string> name_parsing;
     float m2pixel;
+
+    float origin_x;
+    float origin_y;
+
+    float origin_to_mat_x;
+    float origin_to_mat_y;
 
     int a = 10;
     int b = 10;
@@ -540,6 +548,54 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
         //
     }
+    else if (type == "path")
+    {
+        std::cout<<"ppppppppppppppppath"<<std::endl;
+        std::ifstream readFile;
+        readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map1/Map1.yaml");
+        if(readFile.is_open())
+        {
+            while(!readFile.eof())
+            {
+                std::string str;
+                std::getline(readFile, str);
+                boost::split(yaml, str, boost::is_any_of("["), boost::algorithm::token_compress_on);
+                for(int i = 0; i < yaml.size(); i++)
+                {
+                    //if(i % 2 == 0)
+                    //{
+                         if(yaml[i] == "origin: ")
+                         {
+                            std::cout << yaml[i+1] << std::endl;
+                            boost::split(origin_value, yaml[i+1], boost::is_any_of(","), boost::algorithm::token_compress_on);
+                            std::cout << origin_value[0] << std::endl;
+                            std::cout << origin_value[1] << std::endl;
+                            
+                            origin_x = -1*stof(origin_value[0]);
+                            origin_y = -1*stof(origin_value[1]);
+                            
+                            std::cout << origin_x << std::endl;
+                            std::cout << origin_y << std::endl;
+
+                            //std::cout << yaml[i+2] <<std::endl;
+                         }
+                        //std::cout << yaml[i] << std::endl;
+                    //}
+                }
+              
+            }
+            float map_resolution = 0.025;
+            origin_to_mat_x = int(origin_x / map_resolution);
+            origin_to_mat_y = int(origin_y / map_resolution);
+
+            std::cout << origin_to_mat_x << std::endl;
+            std::cout << origin_to_mat_y << std::endl;
+            readFile.close();
+            std::cout<<"finisgh"<<std::endl;
+        }
+        std::cout<<"not iterator"<<std::endl;
+    }
+
     else if (type == "file")
 
     {
@@ -579,15 +635,16 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             ss << "success";
             std::string yaml_path = f_;
 
-            boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
-            boost::split(name_parsing, y_[2], boost::is_any_of("."), boost::algorithm::token_compress_on);
+            //boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
+            //boost::split(name_parsing, y_[2], boost::is_any_of("."), boost::algorithm::token_compress_on);
             // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
-            directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
-            std::cout << y_[0] << std::endl;
-            std::cout << y_[1] << std::endl;
-            std::cout << y_[2] << std::endl;
-            filename = name_parsing[0];
-            std::cout << name_parsing[0] << std::endl;
+            //directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
+            directory_path = "/home/minji/a/map_gui/src/data/CoNA/";
+            //std::cout << y_[0] << std::endl;
+            //std::cout << y_[1] << std::endl;
+            //std::cout << y_[2] << std::endl;
+            //filename = name_parsing[0];
+            //std::cout << name_parsing[0] << std::endl;
 
             // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
             // std::cout << y_path << std::endl;
@@ -619,7 +676,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         {
             std::cout << "image empty !! " << std::endl;
             // file_path = "/home/cona/data/";
-            file_path = "/home/minji/map_gui/src/data/CoNA/";
+            file_path = "/home/minji/a/map_gui/src/data/CoNA/";
             ss << "fail";
         }
         // load_msg.data = ss.str();

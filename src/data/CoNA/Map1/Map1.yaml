@@ -1,4 +1,4 @@
-image: /home/minji/map_gui/src/data/CoNA/Map1/Map1.pgm
+image: /home/minji/a/map_gui/src/data/CoNA/Map1/Map1.pgm
 resolution: 0.025000
 origin: [-8.603178, -4.064206, 0.000000]
 negate: 0
