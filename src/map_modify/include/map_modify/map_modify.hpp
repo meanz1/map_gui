@@ -99,11 +99,13 @@ void MODMAP::initNode()
     sub4 = n.subscribe("/mappos", 1, &MODMAP::jsonCallback, this);
     map_pub = it.advertise("map_pgm", 1);
     map_pub_big = it.advertise("map_big", 1);
+    pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
     file_load = n.advertise<std_msgs::String>("file_load", 1);
     // occ_pub = n.advertise<nav_msgs::OccupancyGrid>("map_out", 10);
     //  img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 0);
     //  img = cv::imread(file_path, 0);
     ros::Rate loop_rate(10);
+
     // cv::Mat img = cv::imread("/home/minji/map_gui/src/Map2/Map1.pgm", cv::IMREAD_COLOR);
 }
 
@@ -219,7 +221,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         std::cout << "second" << std::endl;
     }
     std::cout << "zzzzzzzzzzzzzzzzzzzzzzzzzz" << std::endl;
-    pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
+    // pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
 
     std_msgs::Float32MultiArray mapsize;
 
@@ -591,6 +593,19 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         ss.str("");
         std::cout << file_path << std::endl;
         std::cout << local_file_path << std::endl;
+        const char* _c_local_file_path = local_file_path.c_str();
+        FILE *file_;
+        if ((file_ = fopen(_c_local_file_path, "r")))
+        {
+            fclose(file_);
+        }
+        else
+        {
+            std::cout << "Cannot open file" << std::endl;
+            return;
+        }
+        
+        
         img = cv::imread(local_file_path, 0);
         color_img = cv::imread(local_file_path, 1);
 
