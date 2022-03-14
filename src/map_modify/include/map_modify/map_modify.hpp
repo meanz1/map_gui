@@ -18,7 +18,7 @@
 #include <mutex>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <cmath>
 #include <jsoncpp/json/json.h>
 
 #include <opencv4/opencv2/opencv.hpp>
@@ -26,7 +26,7 @@
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
 #define TRUE 1
 #define FALSE 0
-
+#define PI 3.141592
 class MODMAP
 {
 public:
@@ -65,6 +65,22 @@ public:
     std::vector<std::string> yaml;
     std::vector<std::string> origin_value;
     std::vector<std::string> name_parsing;
+    std::vector<std::string> txt_value;
+    std::vector<float> txt_value_x;
+    std::vector<float> txt_value_y;
+
+    std::vector<int> txt_point_x;
+    std::vector<int> txt_point_y;
+
+    std::vector<int> trans_point_x;
+    std::vector<int> trans_point_y; 
+
+    std::vector<int> trans_Lpoint_x;
+    std::vector<int> trans_Lpoint_y;
+
+    std::vector<int> trans_Rpoint_x;
+    std::vector<int> trans_Rpoint_y;
+
     float m2pixel;
 
     float origin_x;
@@ -550,6 +566,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     }
     else if (type == "path")
     {
+        std::vector<std::string> txt_place;
+        std::vector<float> angle_;
+
         std::cout<<"ppppppppppppppppath"<<std::endl;
         std::ifstream readFile;
         readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map1/Map1.yaml");
@@ -572,34 +591,111 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                             std::cout << origin_value[1] << std::endl;
                             
                             origin_x = -1*stof(origin_value[0]);
+                            
                             origin_y = -1*stof(origin_value[1]);
                             
                             std::cout << origin_x << std::endl;
                             std::cout << origin_y << std::endl;
 
-                            //std::cout << yaml[i+2] <<std::endl;
                          }
-                        //std::cout << yaml[i] << std::endl;
-                    //}
                 }
               
             }
+            
             float map_resolution = 0.025;
             origin_to_mat_x = int(origin_x / map_resolution);
-            origin_to_mat_y = int(origin_y / map_resolution);
+            origin_to_mat_y = color_img.rows - int(origin_y / map_resolution);
 
             std::cout << origin_to_mat_x << std::endl;
             std::cout << origin_to_mat_y << std::endl;
             readFile.close();
-            std::cout<<"finisgh"<<std::endl;
+
+            readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map1/map_file.txt");
+            if(readFile.is_open())
+            {
+                while(!readFile.eof())
+                {
+                    std::string str_txt;
+                    std::getline(readFile, str_txt);
+                    boost::split(txt_value, str_txt, boost::is_any_of(","), boost::algorithm::token_compress_on);
+                    
+                    for(int i = 0; i < txt_value.size(); i++)
+                    {   
+                        if(i%6 == 1)
+                        {
+                            txt_value_x.push_back(stof(txt_value[i]));
+                        }
+                        else if(i%6 == 2)
+                        {
+                            txt_value_y.push_back(stof(txt_value[i]));
+                        }
+                        if(i%6 == 3)
+                        {   
+                            angle_.push_back(stof(txt_value[i]));
+                            // if(stof(txt_value[i]) < 0 )
+                            // {
+                            //     angle_.push_back(360+stof(txt_value[i]));
+                            // } 
+                            // else 
+                            // {
+                            //     angle_.push_back(stof(txt_value[i]));
+                            // }
+                            
+                        }
+                        if(i%6 == 4)
+                        {
+                            txt_place.push_back(txt_value[i]);
+
+                        }
+                    }
+                    
+                }
+            }
+            
+            for (int i = 0; i < txt_value_x.size(); i ++)
+            {
+                std::cout<< i << "  angle : " << angle_[i] << std::endl;
+                txt_point_x.push_back(origin_to_mat_x + txt_value_x[i]/0.025);
+                txt_point_y.push_back(origin_to_mat_y - txt_value_y[i]/0.025);
+
+                trans_point_x.push_back(std::cos(angle_[i]*PI/180)*txt_point_x[i] - std::sin(angle_[i]*PI/180)*txt_point_y[i]);
+                trans_point_y.push_back(std::sin(angle_[i]*PI/180)*txt_point_x[i] + std::cos(angle_[i]*PI/180)*txt_point_y[i]);
+                
+                trans_Lpoint_x.push_back(std::cos(angle_[i]*PI/180)*(txt_point_x[i]-5) - std::sin(angle_[i]*PI/180)*(txt_point_y[i]+10));
+                trans_Lpoint_y.push_back(std::sin(angle_[i]*PI/180)*(txt_point_x[i]-5) + std::cos(angle_[i]*PI/180)*(txt_point_y[i]+10));
+
+                trans_Rpoint_x.push_back(std::cos(angle_[i]*PI/180)*(txt_point_x[i]+5) - std::sin(angle_[i]*PI/180)*(txt_point_y[i]+10));
+                trans_Rpoint_y.push_back(std::sin(angle_[i]*PI/180)*(txt_point_x[i]+5) + std::cos(angle_[i]*PI/180)*(txt_point_y[i]+10));
+
+                std::string a = std::to_string(i);
+                
+                std::cout<< i << "     " << txt_point_x[i] << "      " << txt_point_y[i]<<std::endl;
+                //std::cout << i+1 << "  x : " << txt_value_x[i] << "  y : " << txt_value_y[i] << std::endl;
+                cv::Point trian_[3] = {{trans_Lpoint_x[i], trans_Lpoint_y[i]}, {trans_point_x[i], trans_point_y[i]}, {trans_Rpoint_x[i], trans_Rpoint_y[i]}};
+                cv::Point *t[1] = {trian_};
+                int tri_npts[1] = {3};
+                //cv::polylines(color_img, t, tri_npts, 1, 0, blue);
+                cv::circle(color_img, cv::Point(txt_point_x[i], txt_point_y[i]), 4, green, -1);
+               
+                //글자나오게하는 곳
+                //if(txt_place[i] != " none") {
+                //    cv::putText(color_img, txt_place[i], cv::Point(txt_point_x[i]+7, txt_point_y[i]+7), 2, 0.4, red);
+                //}
+                //cv::putText(color_img, a, cv::Point(trans_point_x[i]+2, trans_point_y[i]+2), 2, 0.4, red);
+            }
+            readFile.close();
+            
         }
-        std::cout<<"not iterator"<<std::endl;
+        cv::circle(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), 6, blue, -1);
+
+        cv::imshow("circle", color_img);
+        cv::waitKey(0);
+        
     }
 
     else if (type == "file")
 
     {
-
         std::stringstream ss;
         // file_path += f_;
         ss.str("");
