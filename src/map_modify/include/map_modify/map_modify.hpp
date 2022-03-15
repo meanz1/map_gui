@@ -66,20 +66,40 @@ public:
     std::vector<std::string> origin_value;
     std::vector<std::string> name_parsing;
     std::vector<std::string> txt_value;
+
     std::vector<float> txt_value_x;
     std::vector<float> txt_value_y;
 
     std::vector<int> txt_point_x;
     std::vector<int> txt_point_y;
 
+    // 회전 전 화살표 포인트 좌표
+
+    std::vector<int> txt_pointer_x;
+    std::vector<int> txt_pointer_y;
+
+    // 회전 후 화살표 포인트 좌표
+
+    std::vector<int> trans_pointer_x;
+    std::vector<int> trans_pointer_y;
+
+    // 세 꼭짓점으로 잡아서 방향 확인해줄 때 좌표
+
     std::vector<int> trans_point_x;
-    std::vector<int> trans_point_y; 
+    std::vector<int> trans_point_y;
 
     std::vector<int> trans_Lpoint_x;
     std::vector<int> trans_Lpoint_y;
 
     std::vector<int> trans_Rpoint_x;
     std::vector<int> trans_Rpoint_y;
+
+    // (0, 0) 기준으로 해서 회전 전 좌표
+    std::vector<int> zero_x;
+    std::vector<int> zero_y;
+
+    // 기준좌표로부터 거리(y축 대칭 시켜줄거라 ㅎ)
+    std::vector<int> distance;
 
     float m2pixel;
 
@@ -569,39 +589,37 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         std::vector<std::string> txt_place;
         std::vector<float> angle_;
 
-        std::cout<<"ppppppppppppppppath"<<std::endl;
+        std::cout << "ppppppppppppppppath" << std::endl;
         std::ifstream readFile;
         readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map1/Map1.yaml");
-        if(readFile.is_open())
+        if (readFile.is_open())
         {
-            while(!readFile.eof())
+            while (!readFile.eof())
             {
                 std::string str;
                 std::getline(readFile, str);
                 boost::split(yaml, str, boost::is_any_of("["), boost::algorithm::token_compress_on);
-                for(int i = 0; i < yaml.size(); i++)
+                for (int i = 0; i < yaml.size(); i++)
                 {
-                    //if(i % 2 == 0)
+                    // if(i % 2 == 0)
                     //{
-                         if(yaml[i] == "origin: ")
-                         {
-                            std::cout << yaml[i+1] << std::endl;
-                            boost::split(origin_value, yaml[i+1], boost::is_any_of(","), boost::algorithm::token_compress_on);
-                            std::cout << origin_value[0] << std::endl;
-                            std::cout << origin_value[1] << std::endl;
-                            
-                            origin_x = -1*stof(origin_value[0]);
-                            
-                            origin_y = -1*stof(origin_value[1]);
-                            
-                            std::cout << origin_x << std::endl;
-                            std::cout << origin_y << std::endl;
+                    if (yaml[i] == "origin: ")
+                    {
+                        std::cout << yaml[i + 1] << std::endl;
+                        boost::split(origin_value, yaml[i + 1], boost::is_any_of(","), boost::algorithm::token_compress_on);
+                        std::cout << origin_value[0] << std::endl;
+                        std::cout << origin_value[1] << std::endl;
 
-                         }
+                        origin_x = -1 * stof(origin_value[0]);
+
+                        origin_y = -1 * stof(origin_value[1]);
+
+                        std::cout << origin_x << std::endl;
+                        std::cout << origin_y << std::endl;
+                    }
                 }
-              
             }
-            
+
             float map_resolution = 0.025;
             origin_to_mat_x = int(origin_x / map_resolution);
             origin_to_mat_y = color_img.rows - int(origin_y / map_resolution);
@@ -611,86 +629,108 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             readFile.close();
 
             readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map1/map_file.txt");
-            if(readFile.is_open())
+            if (readFile.is_open())
             {
-                while(!readFile.eof())
+                while (!readFile.eof())
                 {
                     std::string str_txt;
                     std::getline(readFile, str_txt);
                     boost::split(txt_value, str_txt, boost::is_any_of(","), boost::algorithm::token_compress_on);
-                    
-                    for(int i = 0; i < txt_value.size(); i++)
-                    {   
-                        if(i%6 == 1)
+
+                    for (int i = 0; i < txt_value.size(); i++)
+                    {
+                        if (i % 6 == 1)
                         {
                             txt_value_x.push_back(stof(txt_value[i]));
                         }
-                        else if(i%6 == 2)
+                        else if (i % 6 == 2)
                         {
                             txt_value_y.push_back(stof(txt_value[i]));
                         }
-                        if(i%6 == 3)
-                        {   
-                            angle_.push_back(stof(txt_value[i]));
-                            // if(stof(txt_value[i]) < 0 )
-                            // {
-                            //     angle_.push_back(360+stof(txt_value[i]));
-                            // } 
-                            // else 
-                            // {
-                            //     angle_.push_back(stof(txt_value[i]));
-                            // }
-                            
+                        if (i % 6 == 3)
+                        {
+
+                            if (stof(txt_value[i]) < 0)
+                            {
+                                angle_.push_back(360 + stof(txt_value[i]));
+                            }
+                            else
+                            {
+                                angle_.push_back(stof(txt_value[i]));
+                            }
                         }
-                        if(i%6 == 4)
+                        if (i % 6 == 4)
                         {
                             txt_place.push_back(txt_value[i]);
-
                         }
                     }
-                    
                 }
             }
-            
-            for (int i = 0; i < txt_value_x.size(); i ++)
+
+            for (int i = 0; i < txt_value_x.size(); i++)
             {
-                std::cout<< i << "  angle : " << angle_[i] << std::endl;
-                txt_point_x.push_back(origin_to_mat_x + txt_value_x[i]/0.025);
-                txt_point_y.push_back(origin_to_mat_y - txt_value_y[i]/0.025);
+                int distance_val;
+                std::cout << i << "  angle : " << angle_[i] << std::endl;
+                txt_point_x.push_back(origin_to_mat_x + txt_value_x[i] / 0.025);
+                txt_point_y.push_back(origin_to_mat_y - txt_value_y[i] / 0.025);
 
-                trans_point_x.push_back(std::cos(angle_[i]*PI/180)*txt_point_x[i] - std::sin(angle_[i]*PI/180)*txt_point_y[i]);
-                trans_point_y.push_back(std::sin(angle_[i]*PI/180)*txt_point_x[i] + std::cos(angle_[i]*PI/180)*txt_point_y[i]);
-                
-                trans_Lpoint_x.push_back(std::cos(angle_[i]*PI/180)*(txt_point_x[i]-5) - std::sin(angle_[i]*PI/180)*(txt_point_y[i]+10));
-                trans_Lpoint_y.push_back(std::sin(angle_[i]*PI/180)*(txt_point_x[i]-5) + std::cos(angle_[i]*PI/180)*(txt_point_y[i]+10));
+                txt_pointer_x.push_back(txt_point_x[i] + 9);
+                txt_pointer_y.push_back(txt_point_y[i]);
 
-                trans_Rpoint_x.push_back(std::cos(angle_[i]*PI/180)*(txt_point_x[i]+5) - std::sin(angle_[i]*PI/180)*(txt_point_y[i]+10));
-                trans_Rpoint_y.push_back(std::sin(angle_[i]*PI/180)*(txt_point_x[i]+5) + std::cos(angle_[i]*PI/180)*(txt_point_y[i]+10));
+                zero_x.push_back(std::cos(angle_[i] * PI / 180) * 9 - std::sin(angle_[i] * PI / 180) * 0 + txt_point_x[i]);
+                zero_y.push_back(std::sin(angle_[i] * PI / 180) * 9 + std::cos(angle_[i] * PI / 180) * 0 + txt_point_y[i]);
+
+                // zero_x.push_back(txt_pointer_x[i] - 9);
+                // zero_y.push_back(txt_pointer_y[i]);
+
+                trans_pointer_x.push_back(std::cos(90 * PI / 180) * txt_pointer_x[i] - std::sin(90 * PI / 180) * txt_pointer_y[i]);
+                trans_pointer_y.push_back(std::sin(90 * PI / 180) * txt_pointer_x[i] + std::cos(90 * PI / 180) * txt_pointer_y[i]);
+
+                trans_point_x.push_back(std::cos(angle_[i] * PI / 180) * txt_point_x[i] - std::sin(angle_[i] * PI / 180) * txt_point_y[i]);
+                trans_point_y.push_back(std::sin(angle_[i] * PI / 180) * txt_point_x[i] + std::cos(angle_[i] * PI / 180) * txt_point_y[i]);
+
+                distance_val = zero_x[i] - txt_point_x[i];
+
+                if (distance_val < 0)
+                {
+                    distance_val *= -1;
+                    distance.push_back(txt_point_x[i] + distance_val);
+                }
+                else
+                {
+                    distance.push_back(txt_point_x[i] - distance_val);
+                }
+
+                // trans_Lpoint_x.push_back(std::cos(angle_[i] * PI / 180) * (txt_point_x[i] - 5) - std::sin(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
+                // trans_Lpoint_y.push_back(std::sin(angle_[i] * PI / 180) * (txt_point_x[i] - 5) + std::cos(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
+
+                // trans_Rpoint_x.push_back(std::cos(angle_[i] * PI / 180) * (txt_point_x[i] + 5) - std::sin(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
+                // trans_Rpoint_y.push_back(std::sin(angle_[i] * PI / 180) * (txt_point_x[i] + 5) + std::cos(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
 
                 std::string a = std::to_string(i);
-                
-                std::cout<< i << "     " << txt_point_x[i] << "      " << txt_point_y[i]<<std::endl;
-                //std::cout << i+1 << "  x : " << txt_value_x[i] << "  y : " << txt_value_y[i] << std::endl;
-                cv::Point trian_[3] = {{trans_Lpoint_x[i], trans_Lpoint_y[i]}, {trans_point_x[i], trans_point_y[i]}, {trans_Rpoint_x[i], trans_Rpoint_y[i]}};
-                cv::Point *t[1] = {trian_};
-                int tri_npts[1] = {3};
-                //cv::polylines(color_img, t, tri_npts, 1, 0, blue);
-                cv::circle(color_img, cv::Point(txt_point_x[i], txt_point_y[i]), 4, green, -1);
-               
+
+                std::cout << i << "     " << txt_point_x[i] << "      " << txt_point_y[i] << std::endl;
+                // std::cout << i+1 << "  x : " << txt_value_x[i] << "  y : " << txt_value_y[i] << std::endl;
+                // cv::Point trian_[3] = {{trans_Lpoint_x[i], trans_Lpoint_y[i]}, {trans_point_x[i], trans_point_y[i]}, {trans_Rpoint_x[i], trans_Rpoint_y[i]}};
+                // cv::Point *t[1] = {trian_};
+                // int tri_npts[1] = {3};
+                // cv::polylines(color_img, t, tri_npts, 1, 0, blue);
+                cv::circle(color_img, cv::Point(txt_point_x[i], txt_point_y[i]), 2, green, -1);
+                cv::line(color_img, cv::Point(distance[i], distance[i]), cv::Point(txt_point_x[i], txt_point_y[i]), blue);
+
                 //글자나오게하는 곳
-                //if(txt_place[i] != " none") {
-                //    cv::putText(color_img, txt_place[i], cv::Point(txt_point_x[i]+7, txt_point_y[i]+7), 2, 0.4, red);
+                // if (txt_place[i] != " none")
+                //{
+                //    cv::putText(color_img, txt_place[i], cv::Point(txt_point_x[i] + 7, txt_point_y[i] + 7), 2, 0.4, red);
                 //}
-                //cv::putText(color_img, a, cv::Point(trans_point_x[i]+2, trans_point_y[i]+2), 2, 0.4, red);
+                // cv::putText(color_img, a, cv::Point(txt_point_x[i] + 2, txt_point_y[i] + 2), 2, 0.4, red);
             }
             readFile.close();
-            
         }
         cv::circle(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), 6, blue, -1);
 
         cv::imshow("circle", color_img);
         cv::waitKey(0);
-        
     }
 
     else if (type == "file")
@@ -731,16 +771,16 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             ss << "success";
             std::string yaml_path = f_;
 
-            //boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
-            //boost::split(name_parsing, y_[2], boost::is_any_of("."), boost::algorithm::token_compress_on);
-            // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
-            //directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
+            // boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
+            // boost::split(name_parsing, y_[2], boost::is_any_of("."), boost::algorithm::token_compress_on);
+            //  directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
+            // directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
             directory_path = "/home/minji/a/map_gui/src/data/CoNA/";
-            //std::cout << y_[0] << std::endl;
-            //std::cout << y_[1] << std::endl;
-            //std::cout << y_[2] << std::endl;
-            //filename = name_parsing[0];
-            //std::cout << name_parsing[0] << std::endl;
+            // std::cout << y_[0] << std::endl;
+            // std::cout << y_[1] << std::endl;
+            // std::cout << y_[2] << std::endl;
+            // filename = name_parsing[0];
+            // std::cout << name_parsing[0] << std::endl;
 
             // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
             // std::cout << y_path << std::endl;
