@@ -78,13 +78,6 @@ public:
     std::vector<int> txt_pointer_x;
     std::vector<int> txt_pointer_y;
 
-    // 회전 후 화살표 포인트 좌표
-
-    std::vector<int> trans_pointer_x;
-    std::vector<int> trans_pointer_y;
-
-    // 세 꼭짓점으로 잡아서 방향 확인해줄 때 좌표
-
     std::vector<int> trans_point_x;
     std::vector<int> trans_point_y;
 
@@ -100,6 +93,9 @@ public:
 
     // 기준좌표로부터 거리(y축 대칭 시켜줄거라 ㅎ)
     std::vector<int> distance;
+
+    std::vector<int> Ldistance;
+    std::vector<int> Rdistance;
 
     float m2pixel;
 
@@ -123,6 +119,7 @@ public:
     void jsonCallback(const std_msgs::String::ConstPtr &msg);
     void mapPublish(cv::Mat image);
     void mapBigPublish(cv::Mat image);
+    void mouseCallback(int event, int x, int y, int flags, void *userdata);
 
     MODMAP()
         : it(n)
@@ -200,6 +197,30 @@ void MODMAP::mapBigPublish(cv::Mat image)
     cv_ptr->image = image;
 
     map_pub_big.publish(cv_ptr->toImageMsg());
+}
+
+void MODMAP::mouseCallback(int event, int x, int y, int flags, void *userdata)
+{
+    if (event == cv::EVENT_LBUTTONDOWN)
+    {
+        std::cout << "Left button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+    }
+    else if (event == cv::EVENT_RBUTTONDOWN)
+    {
+        std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
+    }
+    else if (event == cv::EVENT_MOUSEMOVE)
+    {
+        std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << std::endl;
+    }
+    else if (event == cv::EVENT_LBUTTONUP)
+    {
+        std::cout << "Left button of the mouse is released - position (" << x << ", " << y << ")" << std::endl;
+    }
+    else if (event == cv::EVENT_RBUTTONUP)
+    {
+        std::cout << "Right button of the mouse is released - position (" << x << ", " << y << ")" << std::endl;
+    }
 }
 
 void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
@@ -586,12 +607,13 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     }
     else if (type == "path")
     {
+
         std::vector<std::string> txt_place;
         std::vector<float> angle_;
 
         std::cout << "ppppppppppppppppath" << std::endl;
         std::ifstream readFile;
-        readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map1/Map1.yaml");
+        readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/Map1.yaml");
         if (readFile.is_open())
         {
             while (!readFile.eof())
@@ -628,7 +650,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             std::cout << origin_to_mat_y << std::endl;
             readFile.close();
 
-            readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map1/map_file.txt");
+            readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
             if (readFile.is_open())
             {
                 while (!readFile.eof())
@@ -670,6 +692,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             for (int i = 0; i < txt_value_x.size(); i++)
             {
                 int distance_val;
+
+                // int distance_Lval;
+                // int distance_Rval;
+
                 std::cout << i << "  angle : " << angle_[i] << std::endl;
                 txt_point_x.push_back(origin_to_mat_x + txt_value_x[i] / 0.025);
                 txt_point_y.push_back(origin_to_mat_y - txt_value_y[i] / 0.025);
@@ -680,14 +706,11 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 zero_x.push_back(std::cos(angle_[i] * PI / 180) * 9 - std::sin(angle_[i] * PI / 180) * 0 + txt_point_x[i]);
                 zero_y.push_back(std::sin(angle_[i] * PI / 180) * 9 + std::cos(angle_[i] * PI / 180) * 0 + txt_point_y[i]);
 
-                // zero_x.push_back(txt_pointer_x[i] - 9);
-                // zero_y.push_back(txt_pointer_y[i]);
+                trans_Lpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * 5 + txt_point_x[i]);
+                trans_Lpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * 5 + txt_point_y[i]);
 
-                trans_pointer_x.push_back(std::cos(90 * PI / 180) * txt_pointer_x[i] - std::sin(90 * PI / 180) * txt_pointer_y[i]);
-                trans_pointer_y.push_back(std::sin(90 * PI / 180) * txt_pointer_x[i] + std::cos(90 * PI / 180) * txt_pointer_y[i]);
-
-                trans_point_x.push_back(std::cos(angle_[i] * PI / 180) * txt_point_x[i] - std::sin(angle_[i] * PI / 180) * txt_point_y[i]);
-                trans_point_y.push_back(std::sin(angle_[i] * PI / 180) * txt_point_x[i] + std::cos(angle_[i] * PI / 180) * txt_point_y[i]);
+                trans_Rpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * -5 + txt_point_x[i]);
+                trans_Rpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * -5 + txt_point_y[i]);
 
                 distance_val = zero_x[i] - txt_point_x[i];
 
@@ -701,34 +724,56 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                     distance.push_back(txt_point_x[i] - distance_val);
                 }
 
-                // trans_Lpoint_x.push_back(std::cos(angle_[i] * PI / 180) * (txt_point_x[i] - 5) - std::sin(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
-                // trans_Lpoint_y.push_back(std::sin(angle_[i] * PI / 180) * (txt_point_x[i] - 5) + std::cos(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
+                // distance_Lval = trans_Lpoint_x[i] - txt_point_x[i];
 
-                // trans_Rpoint_x.push_back(std::cos(angle_[i] * PI / 180) * (txt_point_x[i] + 5) - std::sin(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
-                // trans_Rpoint_y.push_back(std::sin(angle_[i] * PI / 180) * (txt_point_x[i] + 5) + std::cos(angle_[i] * PI / 180) * (txt_point_y[i] + 10));
+                // if (distance_Lval < 0)
+                // {
+                //     distance_Lval *= -1;
+                //     Ldistance.push_back(txt_point_x[i] + distance_Lval);
+                // }
+                // else
+                // {
+                //     Ldistance.push_back(txt_point_x[i] - distance_Lval);
+                // }
+
+                // distance_Rval = trans_Rpoint_x[i] - txt_point_x[i];
+
+                // if (distance_Rval < 0)
+                // {
+                //     distance_Rval *= -1;
+                //     Rdistance.push_back(txt_point_x[i] + distance_Rval);
+                // }
+                // else
+                // {
+                //     Rdistance.push_back(txt_point_x[i] - distance_Rval);
+                // }
 
                 std::string a = std::to_string(i);
 
                 std::cout << i << "     " << txt_point_x[i] << "      " << txt_point_y[i] << std::endl;
                 // std::cout << i+1 << "  x : " << txt_value_x[i] << "  y : " << txt_value_y[i] << std::endl;
-                // cv::Point trian_[3] = {{trans_Lpoint_x[i], trans_Lpoint_y[i]}, {trans_point_x[i], trans_point_y[i]}, {trans_Rpoint_x[i], trans_Rpoint_y[i]}};
+
+                // cv::Point trian_[3] = {{Ldistance[i], trans_Lpoint_y[i]}, {txt_point_x[i], txt_point_y[i]}, {Rdistance[i], trans_Rpoint_y[i]}};
                 // cv::Point *t[1] = {trian_};
                 // int tri_npts[1] = {3};
                 // cv::polylines(color_img, t, tri_npts, 1, 0, blue);
-                cv::circle(color_img, cv::Point(txt_point_x[i], txt_point_y[i]), 2, green, -1);
-                cv::line(color_img, cv::Point(distance[i], distance[i]), cv::Point(txt_point_x[i], txt_point_y[i]), blue);
+
+                // cv::circle(color_img, cv::Point(txt_point_x[i], txt_point_y[i]), 2, green, -1);
+                cv::arrowedLine(color_img, cv::Point(txt_point_x[i], txt_point_y[i]), cv::Point(distance[i], zero_y[i]), blue, 1);
 
                 //글자나오게하는 곳
-                // if (txt_place[i] != " none")
-                //{
-                //    cv::putText(color_img, txt_place[i], cv::Point(txt_point_x[i] + 7, txt_point_y[i] + 7), 2, 0.4, red);
-                //}
+                if (txt_place[i] != " none")
+                {
+                    cv::putText(color_img, txt_place[i], cv::Point(txt_point_x[i] + 7, txt_point_y[i] - 4), 2, 0.4, red);
+                }
                 // cv::putText(color_img, a, cv::Point(txt_point_x[i] + 2, txt_point_y[i] + 2), 2, 0.4, red);
             }
             readFile.close();
         }
-        cv::circle(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), 6, blue, -1);
-
+        cv::circle(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), 5, green, -1);
+        // cv::arrowedLine(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), cv::Point(origin_to_mat_x + 10, origin_to_mat_y), green);
+        cv::namedWindow("circle", 1);
+        cv::setMouseCallback("circle", MODMAP::mouseCallback, this);
         cv::imshow("circle", color_img);
         cv::waitKey(0);
     }
