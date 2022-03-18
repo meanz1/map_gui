@@ -142,6 +142,15 @@ main {
     color: #3d3d3d;
 }
 
+#arrow {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;  
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
+}
+
 #all_erase {
     height: 30px;
     width: 120px;
@@ -161,6 +170,42 @@ main {
 }
 
 #minus {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
+}
+
+#up {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
+}
+
+#down {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
+}
+
+#right {
+    height: 30px;
+    width: 120px;
+    margin-top: 20px;
+    font-weight: 700;
+    font-size: 17px;
+    color: #3d3d3d;
+}
+
+#left {
     height: 30px;
     width: 120px;
     margin-top: 20px;

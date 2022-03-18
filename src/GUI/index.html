@@ -10,7 +10,7 @@
 
 <body>
     <header>
-        <div id="title">Map Editor</div>
+        <div id="title">Map Editor25</div>
 
     </header>
 
@@ -20,26 +20,30 @@
                 <div id="info">/home/data/CoNA/</div>
                 <input type="text" id="file_path"></input>
                 <button id="find_file" onclick="btn_func(this.id)">OK</button>
-                <span id="file_load">no file</span>
+                
             </div>
 
             <div id="main_can">
                 <canvas id="canvas"></canvas>
                 <img id="canvas_img"></img>
 
-            </div>
+            </div>                    
 
 
             <div id="map_size">
                 <button id="plus" onclick="plus()">Zoom in</button>
                 <button id="minus" onclick="minus()">Zoom out</button>
-                <button id="ok" onclick="ok()">Change</button>
-                <button id="path" onclick="path()">Path</button>
+                <button id="up" onclick="direction(this.id)">UP</button>
+                <button id="down" onclick="direction(this.id)">DOWN</button>
+                <button id="right" onclick="direction(this.id)">RIGHT</button>
+                <button id="left" onclick="direction(this.id)">LEFT</button>
+                <button id="left" onclick="path()">PATH</button>
+                <button id="ok" onclick="ok()">Change</button> 
             </div>
 
         </div>
         <div id="btn">
-
+            
 
             <span id="load">Load and Save</span>
             <button id="get_map" onclick="btn_func(this.id)">Get map</button>
@@ -49,6 +53,7 @@
             <button id="line" onclick="drawLine()">Line</button>
             <button id="square" onclick="drawSquare()">Square</button>
             <button id="eraser" onclick="drawErase()">Eraser</button>
+            <button id="arrow" onclick="drawArrow()">Arrow</button>
             <button id="all_erase" onclick="allErase()">Display clear</button>
             <div id="map">
                 <canvas id="mini_can"></canvas>
@@ -68,18 +73,19 @@
             // });
 
             ros.on('connection', function () {
-
+                
                 console.log('Connected to websocket server');
             })
 
             ros.on('error', function (error) {
                 console.log('error ros server');
-
+               
+                
             })
 
             ros.on('close', function () {
                 console.log('Connection to websocket server closed');
-
+               
             })
 
             var canvas = document.getElementById("canvas");
@@ -120,6 +126,8 @@
             var line = false;
             var square = false;
             var erase = false;
+            var arrow = false;
+    
             var cnt = 0;
 
             var mapimg = new ROSLIB.Topic({
@@ -132,31 +140,28 @@
                 ros: ros,
                 name: "/mapsize",
                 messageType: "std_msgs/Float32MultiArray",
-            })
-
-            var load_status = new ROSLIB.Topic({
-                ros: ros,
-                name: "/file_load",
-                messageType: "std_msgs/String"
-            })
+            });
 
             var mapPos = new ROSLIB.Topic({
                 ros: ros,
                 name: "/mappos",
                 messageType: "std_msgs/String",
-            })
+            });
 
             var mapBig = new ROSLIB.Topic({
                 ros: ros,
                 name: "/map_big/compressed",
                 messageType: "sensor_msgs/CompressedImage",
-            })
+            });
+
             mapimg.subscribe((m) => {
                 console.log("hell");
                 document.getElementById("mini_can_img").src = "data:image/jpg;base64," + m.data;
             });
+
+            
             mapBig.subscribe((m) => {
-                console.log("map_big");
+                console.log("pllllllz");
                 document.getElementById("canvas_img").src = "data:image/jpg;base64," + m.data;
             });
 
@@ -166,25 +171,9 @@
                 mini_can.width = m.data[0];
                 mini_can.height = m.data[1];
                 resolution = m.data[2];
-
+                console.log(mapsize);
             })
 
-            var loadPath = new ROSLIB.Topic({
-                ros: ros,
-                name: "/path",
-                messageType: "std_msgs/String",
-            });
-
-            load_status.subscribe((m) => {
-                console.log(m.data);
-                document.getElementById("file_load").innerHTML = m.data;
-                if (m.data == "success") {
-                    document.getElementById("file_load").style.color = "green";
-                }
-                else {
-                    document.getElementById("file_load").style.color = "red";
-                }
-            })
 
             canvas.addEventListener("mousedown", function (me) {
                 mDown(me)
@@ -265,6 +254,23 @@
                         cnt = 0;
                     }
                 }
+
+                if(arrow) {
+                    ctx.beginPath();
+                    ctx.arc(stX, stY, 4, 0, Math.PI * 2, true);
+                    ctx.fill();
+                    ctx.closePath();
+
+                    if (cnt == 2) {
+                        ctx.lineWidth = 3;
+                        ctx.strokeStyle = "rgb(0, 0, 255)";
+                        ctx.beginPath();
+                        ctx.moveTo(pos[1][0], pos[1][1]);
+                        ctx.lineTo(pos[2][0], pos[2][1]);
+                        ctx.stroke();
+                        cnt = 0;
+                    }
+                }
                 console.log(stX, stY);
 
                 mini_ctx.fillStyle = 'blue';
@@ -287,7 +293,11 @@
                 zoom_width = a * 4;
                 zoom_height = a * 4;
                 miniX = me.offsetX;
+
+                
                 miniY = me.offsetY;
+
+                console.log("X : ", miniX, " Y : ", miniY);
                 zoom_x = miniX - a * 2;
                 zoom_y = miniY - a * 2;
 
@@ -415,6 +425,201 @@
                 console.log(400 / (res_x + zoom_width));
             }
 
+            function path() {
+                const mapMsg = {
+                    type: "path",
+                    width: canvas.width,
+                    height: canvas.height,
+                    x: res_x,
+                    y: res_y,
+                }
+
+                let msg_map = JSON.stringify(mapMsg)
+                let String_map = new ROSLIB.Message({
+                    data: msg_map,
+                });
+
+                mapPos.publish(String_map);
+            }
+
+            function direction(mode) 
+            {
+                let e = 0;
+                if (mode == "up") {
+                    e = 1;
+                    try 
+                    {
+                        if (zoom_y - 5 < 0 || zoom_y + zoom_height > mini_can.height || zoom_x < 0 || zoom_x + zoom_width > mini_can.width) {
+                            throw e;
+                        }
+                        mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
+                        miniY = miniY - 5;
+                        console.log("up");
+                        mini_ctx.fillStyle = 'blue';
+                        mini_ctx.beginPath();
+                        mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                        mini_ctx.fill();
+                        mini_ctx.closePath();
+                        mini_ctx.strokeRect(zoom_x, zoom_y - 5, zoom_width, zoom_height);
+                        zoom_y = zoom_y - 5;
+
+                        res_x = zoom_x / resolution;
+                        res_y = zoom_y / resolution;
+                        res_x = parseInt(res_x);
+                        res_y = parseInt(res_y);
+
+                        const mapMsg = {
+                            type: mode,
+                            width: canvas.width,
+                            height: canvas.height,
+                            x: res_x,
+                            y: res_y,
+                        }
+
+                        let msg_map = JSON.stringify(mapMsg)
+                        let String_map = new ROSLIB.Message({
+                            data: msg_map,
+                        });
+
+                        mapPos.publish(String_map);
+                    } 
+                    catch (e) 
+                    {
+                        console.log("error1 : ", e);
+                    }
+                } 
+                else if (mode == "down") 
+                {
+                    e = 2;
+                    try 
+                    {
+                        if (zoom_y + zoom_height + 5 > mini_can.height || zoom_y < 0 || zoom_x < 0 || zoom_x + zoom_width > mini_can.width) {
+                            throw e;
+                        }
+                        mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
+                        miniY = miniY + 5;
+                        console.log("down");
+                        mini_ctx.fillStyle = 'blue';
+                        mini_ctx.beginPath();
+                        mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                        mini_ctx.fill();
+                        mini_ctx.closePath();
+                        mini_ctx.strokeRect(zoom_x, zoom_y + 5, zoom_width, zoom_height);
+                        zoom_y = zoom_y + 5;
+
+                        res_x = zoom_x / resolution;
+                        res_y = zoom_y / resolution;
+                        res_x = parseInt(res_x);
+                        res_y = parseInt(res_y);
+
+                        const mapMsg = {
+                            type: mode,
+                            width: canvas.width,
+                            height: canvas.height,
+                            x: res_x,
+                            y: res_y,
+                        }
+
+                        let msg_map = JSON.stringify(mapMsg)
+                        let String_map = new ROSLIB.Message({
+                            data: msg_map,
+                        });
+
+                        mapPos.publish(String_map);
+                    } 
+                    catch (e) 
+                    {
+                        console.log("error2 : ", e);
+                    }
+                } 
+                else if (mode == "right") 
+                {
+                    e = 3;
+                    try 
+                    {
+                        if (zoom_x < 0 || zoom_x + zoom_width + 5 > mini_can.width || zoom_y < 0 || zoom_y + zoom_height > mini_can.height) {
+                            throw e;
+                        }
+                        mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
+                        console.log(mode);
+                        miniX = miniX + 5;
+                        mini_ctx.fillStyle = 'blue';
+                        mini_ctx.beginPath();
+                        mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                        mini_ctx.fill();
+                        mini_ctx.closePath();
+                        mini_ctx.strokeRect(zoom_x + 5, zoom_y, zoom_width, zoom_height);
+                        zoom_x = zoom_x + 5;
+
+                        res_x = zoom_x / resolution;
+                        res_y = zoom_y / resolution;
+                        res_x = parseInt(res_x);
+                        res_y = parseInt(res_y);
+
+                        const mapMsg = {
+                            type: mode,
+                            width: canvas.width,
+                            height: canvas.height,
+                            x: res_x,
+                            y: res_y,
+                        }
+
+                        let msg_map = JSON.stringify(mapMsg)
+                        let String_map = new ROSLIB.Message({
+                            data: msg_map,
+                        });
+
+                        mapPos.publish(String_map);
+                        
+                    } catch (e) 
+                    {
+                        console.log("error3 : ", e);
+                    }
+                } 
+                else 
+                {
+                    e = 4;
+                    try {
+                        if (zoom_x - 5 < 0 || zoom_x + zoom_width > mini_can.width || zoom_y < 0 || zoom_y + zoom_height > mini_can.height) {
+                            throw e;
+                        }
+                        mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
+                        console.log(mode);
+                        miniX = miniX - 5;
+                        mini_ctx.fillStyle = 'blue';
+                        mini_ctx.beginPath();
+                        mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
+                        mini_ctx.fill();
+                        mini_ctx.closePath();
+                        mini_ctx.strokeRect(zoom_x - 5, zoom_y, zoom_width, zoom_height);
+                        zoom_x = zoom_x - 5;
+
+                        res_x = zoom_x / resolution;
+                        res_y = zoom_y / resolution;
+                        res_x = parseInt(res_x);
+                        res_y = parseInt(res_y);
+
+                        const mapMsg = {
+                            type: mode,
+                            width: canvas.width,
+                            height: canvas.height,
+                            x: res_x,
+                            y: res_y,
+                        }
+
+                        let msg_map = JSON.stringify(mapMsg)
+                        let String_map = new ROSLIB.Message({
+                            data: msg_map,
+                        });
+
+                        mapPos.publish(String_map);
+                    } catch (e) 
+                    {
+                        console.log("error4: ", e);
+                    }
+                }
+            }
+
             function ok() {
                 console.log("ok");
 
@@ -463,7 +668,20 @@
                     });
                 }
 
-
+                else if (arrow) {
+                    const mapMsg = {
+                        type: "ok_arrow",
+                        width: canvas.width,
+                        height: canvas.height,
+                        x: res_x,
+                        y: res_y,
+                        cv_pos: pos,
+                    }
+                    var msg_map = JSON.stringify(mapMsg)
+                    var String_map = new ROSLIB.Message({
+                        data: msg_map,
+                    });
+                }
 
 
                 mapPos.publish(String_map);
@@ -471,6 +689,8 @@
                 erase = false;
                 square = false;
                 line = false;
+                arrow = false;
+                document.getElementById("arrow").style.backgroundColor = "white";
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "white";
@@ -483,30 +703,13 @@
 
             }
 
-            function path() {
-                const mapMsg = {
-                    type: "path",
-                    width: canvas.width,
-                    height: canvas.height,
-                    x: res_x,
-                    y: res_y,
-
-                }
-
-                var msg_map = JSON.stringify(mapMsg)
-                var String_map = new ROSLIB.Message({
-                    data: msg_map,
-                });
-
-                mapPos.publish(String_map);
-                console.log(msg_map);
-            }
-
             function drawLine() {
                 cnt = 0;
                 line = true;
                 square = false;
                 erase = false;
+                arrow = false;
+                document.getElementById("arrow").style.backgroundColor = "white";
                 document.getElementById("line").style.backgroundColor = "rgb(198, 185, 211)";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "white";
@@ -518,6 +721,8 @@
                 square = true;
                 line = false;
                 erase = false;
+                arrow = false;
+                document.getElementById("arrow").style.backgroundColor = "white";
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "rgb(198, 185, 211)";
                 document.getElementById("eraser").style.backgroundColor = "white";
@@ -529,6 +734,8 @@
                 erase = true;
                 square = false;
                 line = false;
+                arrow = false;
+                document.getElementById("arrow").style.backgroundColor = "white";
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "rgb(198, 185, 211)";
@@ -537,11 +744,28 @@
                 //ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
 
+            function drawArrow() {
+                    cnt = 0;
+                    erase = false;
+                    square = false;
+                    line = false;
+                    arrow = true;
+                    document.getElementById("line").style.backgroundColor = "white";
+                    document.getElementById("square").style.backgroundColor = "white";
+                    document.getElementById("eraser").style.backgroundColor = "white";
+                    document.getElementById("arrow").style.backgroundColor = "rgb(198, 185, 211)";
+                    document.getElementById("all_erase").style.backgroundColor = "white";
+
+                    //ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+
             function allErase() {
                 cnt = 0;
                 erase = false;
                 square = false;
                 line = false;
+                arrow = false;
+                document.getElementById("arrow").style.backgroundColor = "white";
                 document.getElementById("line").style.backgroundColor = "white";
                 document.getElementById("square").style.backgroundColor = "white";
                 document.getElementById("eraser").style.backgroundColor = "white";
@@ -565,40 +789,6 @@
                     name: "/btnInput",
                     messageType: "std_msgs/String",
                 });
-
-                if (mode == 'get_map') {
-                    const messages = {
-                        type: mode,
-                        width: mini_can.width,
-                        height: mini_can.height,
-                        x: 10,
-                        y: 10,
-                    }
-                    var messages_str = JSON.stringify(messages)
-                    var String_getmap = new ROSLIB.Message({
-                        data: messages_str,
-                    });
-
-                    ros_func.publish(String_getmap);
-                    console.log("Pub message: ", String_getmap);
-                }
-
-                // if (mode == "reset") {
-                //     const messages = {
-                //         type: mode,
-                //         width: mini_can.width,
-                //         height: mini_can.height,
-                //         x: 10,
-                //         y: 10,
-                //     }
-                //     var messages_str = JSON.stringify(messages)
-                //     var String_getmap = new ROSLIB.Message({
-                //         data: messages_str,
-                //     });
-
-                //     ros_func.publish(String_getmap);
-                //     console.log("Pub message: ", String_getmap);
-                // }
 
                 if (mode == 'save') {
                     console.log('save');
@@ -636,7 +826,7 @@
                     var msg_map = JSON.stringify(mapMsg)
                     var String_map = new ROSLIB.Message({
                         data: msg_map,
-                    });
+                    }); 
 
                     mapPos.publish(String_map);
                     console.log("Pub message: ", String_map);
