@@ -555,9 +555,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 }
             }
         }
-        else if (type == "ok_arrow")
+        else if (type == "ok_arrow")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
         {
-            int line_length;
+            double line_length;
             float gradient;
             for (int i = 1; i < 3; i++)
             {
@@ -568,29 +568,36 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 arrow.y = Position[i][1].asInt() * roi_res;
                 arrow.y = arrow.y + y;
                 pointList_arrow.push_back(arrow);
-
                 
                 
             }
-            cv::line(path_img, pointList_arrow[0], pointList_arrow[1], red);
+            //cv::line(path_img, pointList_arrow[0], pointList_arrow[1], red);
 
-            // line_length = sqrt(pow(pointList_arrow[0].x - pointList_arrow[1].x, 2) + pow(pointList_arrow[0].y - pointList_arrow[1].y, 2));
-            // std::cout << "line length : " << line_length << std::endl;
-            // std::cout << "n = " << line_length/12 << std::endl;
+            line_length = sqrt(pow(pointList_arrow[0].x - pointList_arrow[1].x, 2) + pow(pointList_arrow[0].y - pointList_arrow[1].y, 2));
+            std::cout << "line length : " << line_length << std::endl;
+            std::cout << "n = " << line_length/8 << std::endl;
 
-            // for (int i = 1; i <= line_length/12; i ++)
+            // 선 긋기
+            // for (int i = 0; i <= line_length/4; i ++)
             // {
             //     cv::line(path_img, cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/12)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/12)*i)), cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/12)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/12)*i)+10),green);
             // }
 
-            // 직선의 방정식을 찾아보아요. 화이팅 민지.
-            gradient = (pointList_arrow[1].y - pointList_arrow[0].y)/(pointList_arrow[1].x-pointList_arrow[0].x);
-            std::cout << "gradient : " << gradient << std::endl;
+            for (int i = 1; i <= line_length/8; i ++)
+            {
+                cv::arrowedLine(path_img, cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*(i-1)), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*(i-1))), cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*i)), green, 1);
+                i++;
+            }
+            // map_file.txt에 들어갈 각도.
+            std::cout << -atan2(pointList_arrow[1].y - pointList_arrow[0].y, pointList_arrow[1].x - pointList_arrow[0].x)*180/PI << std::endl;
+
+            // gradient = (pointList_arrow[1].y - pointList_arrow[0].y)/(pointList_arrow[1].x-pointList_arrow[0].x);
+            // std::cout << "gradient : " << gradient << std::endl;
             
-            std::cout << "first X : " << pointList_arrow[0].x << "  first Y : " << pointList_arrow[0].y << std::endl;
-            std::cout << "second X : " << pointList_arrow[1].x << "  second Y : " << pointList_arrow[1].y << std::endl;
-            cv::imshow("ok_arrow", path_img);
-            cv::waitKey(0);
+            // std::cout << "first X : " << pointList_arrow[0].x << "  first Y : " << pointList_arrow[0].y << std::endl;
+            // std::cout << "second X : " << pointList_arrow[1].x << "  second Y : " << pointList_arrow[1].y << std::endl;
+            // cv::imshow("ok_arrow", path_img);
+            // cv::waitKey(0);
 
             // std::cout << "size : " << pointList_arrow.size() << std::endl;
             // for (int j = 1; j < pointList_arrow.size() + 1; j++)
@@ -609,6 +616,20 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             //         }
             //     }
             // }
+
+            // ***************************************************************
+            // 이 부분을 봐야하나요.?>>..?../>??>/>..?>..?
+            // ***************************************************************
+            
+            // click coordination changes to map_file.txt coordination 
+            for (int i = 0; i < txt_value_x.size(); i++)
+            {
+                std::cout << txt_value_x[i] << std::endl;
+                std::cout << txt_point_x[i] - 344*0.025 + 8.603178 << std::endl;
+            }
+
+            // ***************************************************************
+            // ***************************************************************
         }
 
         if (path_flag == true)
@@ -632,11 +653,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             cv::resize(img_roi, img_roi, cv::Size(400, 400));
             mapBigPublish(img_roi);
         }
-        
-
-        // cv::imshow("h", img);
-
-        // cv::waitKey(0);
+       
     }
 
     else if (type == "save")
@@ -772,8 +789,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 txt_point_x.push_back(origin_to_mat_x + txt_value_x[i] / 0.025);
                 txt_point_y.push_back(origin_to_mat_y - txt_value_y[i] / 0.025);
 
-                txt_pointer_x.push_back(txt_point_x[i] + 9);
-                txt_pointer_y.push_back(txt_point_y[i]);
+                
+
+                // txt_pointer_x.push_back(txt_point_x[i] + 9);
+                // txt_pointer_y.push_back(txt_point_y[i]);
 
                 zero_x.push_back(std::cos(angle_[i] * PI / 180) * 9 - std::sin(angle_[i] * PI / 180) * 0 + txt_point_x[i]);
                 zero_y.push_back(std::sin(angle_[i] * PI / 180) * 9 + std::cos(angle_[i] * PI / 180) * 0 + txt_point_y[i]);
@@ -853,8 +872,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         //path_cp_img = path_img(cv::Rect(0, 0, path_img.cols, path_img.rows));
         cv::resize(path_img, path_cp_img, cv::Size(mini_can_w, mini_can_h));
         // cv::arrowedLine(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), cv::Point(origin_to_mat_x + 10, origin_to_mat_y), green);
-        cv::imshow("circle", path_cp_img);
-        cv::waitKey(0);
+        // cv::imshow("circle", path_cp_img);
+        // cv::waitKey(0);
 
         mapPublish(path_cp_img);
     }
