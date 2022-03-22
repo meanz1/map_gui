@@ -93,11 +93,11 @@ class MODMAP
         std::vector<int> trans_point_x;
         std::vector<int> trans_point_y;
 
-        std::vector<int> trans_Lpoint_x;
-        std::vector<int> trans_Lpoint_y;
+        // std::vector<int> trans_Lpoint_x;
+        // std::vector<int> trans_Lpoint_y;
 
-        std::vector<int> trans_Rpoint_x;
-        std::vector<int> trans_Rpoint_y;
+        // std::vector<int> trans_Rpoint_x;
+        // std::vector<int> trans_Rpoint_y;
 
         // (0, 0) 기준으로 해서 회전 전 좌표
         std::vector<int> zero_x;
@@ -121,6 +121,7 @@ class MODMAP
         int b = 10;
         int roi_x, roi_y, roi_height;
         float roi_width;
+        float map_resolution = 0.025;
 
         std::string status = "default";
 
@@ -132,6 +133,8 @@ class MODMAP
         
         void mapPublish(cv::Mat image);
         void mapBigPublish(cv::Mat image);
+
+        void mat2txt();
        
 
         MODMAP()
@@ -616,20 +619,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             //         }
             //     }
             // }
-
-            // ***************************************************************
-            // 이 부분을 봐야하나요.?>>..?../>??>/>..?>..?
-            // ***************************************************************
-            
-            // click coordination changes to map_file.txt coordination 
-            for (int i = 0; i < txt_value_x.size(); i++)
-            {
-                std::cout << txt_value_x[i] << std::endl;
-                std::cout << txt_point_x[i] - 344*0.025 + 8.603178 << std::endl;
-            }
-
-            // ***************************************************************
-            // ***************************************************************
         }
 
         if (path_flag == true)
@@ -694,14 +683,33 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     }
     else if (type == "path")
     {
-        path_flag = true;
-        float map_resolution = 0.025;
-        
+        std::ofstream fout;
+        std::ifstream fin;
+        fin.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
+        fout.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt", std::ios::out | std::ios::in);
+        //fout.seekp(-1,std::ios::end);
+        if(fin.is_open() && fout.is_open())
+        {
+            while(!fin.eof())
+            {
+                std::string last_sen;
+                std::getline(fin, last_sen);
+                if(last_sen == "end")
+                {
+                    std::cout<<"find end"<<std::endl;
+                }
+            }
+            fin.close();
+            fout.close();
+        }
 
+        std::cout << "tellp() : " << fout.tellp() << std::endl;
+        path_flag = true;
+       
         std::vector<std::string> txt_place;
         std::vector<float> angle_;
 
-        std::cout << "ppppppppppppppppath" << std::endl;
+       
         std::ifstream readFile;
         readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/Map1.yaml");
         if (readFile.is_open())
@@ -731,7 +739,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 }
             }
 
-            
             origin_to_mat_x = int(origin_x / map_resolution);
             origin_to_mat_y = color_img.rows - int(origin_y / map_resolution);
 
@@ -785,9 +792,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 // int distance_Lval;
                 // int distance_Rval;
 
-                std::cout << i << "  angle : " << angle_[i] << std::endl;
-                txt_point_x.push_back(origin_to_mat_x + txt_value_x[i] / 0.025);
-                txt_point_y.push_back(origin_to_mat_y - txt_value_y[i] / 0.025);
+               
+                txt_point_x.push_back(origin_to_mat_x + txt_value_x[i] / map_resolution);
+                txt_point_y.push_back(origin_to_mat_y - txt_value_y[i] / map_resolution);
 
                 
 
@@ -797,11 +804,11 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 zero_x.push_back(std::cos(angle_[i] * PI / 180) * 9 - std::sin(angle_[i] * PI / 180) * 0 + txt_point_x[i]);
                 zero_y.push_back(std::sin(angle_[i] * PI / 180) * 9 + std::cos(angle_[i] * PI / 180) * 0 + txt_point_y[i]);
 
-                trans_Lpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * 5 + txt_point_x[i]);
-                trans_Lpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * 5 + txt_point_y[i]);
+                // trans_Lpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * 5 + txt_point_x[i]);
+                // trans_Lpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * 5 + txt_point_y[i]);
 
-                trans_Rpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * -5 + txt_point_x[i]);
-                trans_Rpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * -5 + txt_point_y[i]);
+                // trans_Rpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * -5 + txt_point_x[i]);
+                // trans_Rpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * -5 + txt_point_y[i]);
 
                 distance_val = zero_x[i] - txt_point_x[i];
 
@@ -841,7 +848,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
                 std::string a = std::to_string(i);
 
-                std::cout << i << "     " << txt_point_x[i] << "      " << txt_point_y[i] << std::endl;
+                
                 // std::cout << i+1 << "  x : " << txt_value_x[i] << "  y : " << txt_value_y[i] << std::endl;
 
                 // cv::Point trian_[3] = {{Ldistance[i], trans_Lpoint_y[i]}, {txt_point_x[i], txt_point_y[i]}, {Rdistance[i], trans_Rpoint_y[i]}};
@@ -985,6 +992,30 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
         mapPublish(img_origin);
     }
+}
+
+void MODMAP::mat2txt()
+{
+
+    
+    // ***************************************************************
+    // 이 부분을 봐야하나요.?>>..?../>??>/>..?>..?
+    // ***************************************************************
+            
+    // click coordination changes to map_file.txt coordination 
+            
+    for (int i = 0; i < txt_value_x.size(); i++)
+        {
+            // 이 0.02는 내가 임의로 넣은 값인데 왜 넣어줘야하는지 잘 모르겠지만, 이게 원래 값과 더 가까운 값이 나옴.
+
+            std::cout << txt_value_x[i] << std::endl;
+            std::cout << (txt_point_x[i] - origin_x/map_resolution)*map_resolution + 0.02 << std::endl;
+
+            std::cout << txt_value_y[i] << std::endl;
+            std::cout << (color_img.rows - txt_point_y[i] - origin_y/map_resolution)*map_resolution << std::endl;
+        }
+    // ***************************************************************
+    // ***************************************************************
 }
 
 void MODMAP::MapGenerator(std::string dir_path, const std::string &filename_, int threshold_occupied_, int threshold_free_, nav_msgs::OccupancyGrid map)
