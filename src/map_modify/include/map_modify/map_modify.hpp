@@ -33,7 +33,6 @@
 
 class MODMAP
 {
-    
     public:
         ros::NodeHandle n;
         image_transport::ImageTransport it;
@@ -46,10 +45,7 @@ class MODMAP
         cv::Mat path_img, path_img_roi;
         cv::Mat path_cp_img;
         std::string file_path = "/home/minji/a/map_gui/src/data/CoNA/";
-        // std::string file_path = "/home/cona/data/";
-        // cv::Mat color_img = cv::imread("/home/minji/map_gui/src/Map2/stMap.pgm", 1);
-        // cv::Mat color_img = cv::imread(file_path, 1); 
-        
+      
         nav_msgs::OccupancyGrid pgm_occ;
 
         int map_width, map_height;
@@ -68,7 +64,7 @@ class MODMAP
         int mini_can_h;
 
         std::mutex mtx;
-        // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
+       
         std::string directory_path;
         std::string filename;
 
@@ -92,12 +88,6 @@ class MODMAP
 
         std::vector<int> trans_point_x;
         std::vector<int> trans_point_y;
-
-        // std::vector<int> trans_Lpoint_x;
-        // std::vector<int> trans_Lpoint_y;
-
-        // std::vector<int> trans_Rpoint_x;
-        // std::vector<int> trans_Rpoint_y;
 
         // (0, 0) 기준으로 해서 회전 전 좌표
         std::vector<int> zero_x;
@@ -123,6 +113,8 @@ class MODMAP
         float roi_width;
         float map_resolution = 0.025;
 
+        float changedAngle;
+
         std::string status = "default";
 
         void initNode();
@@ -147,29 +139,13 @@ class MODMAP
 
 void MODMAP::initNode()
 {
-    // sub = n.subscribe("/map", 1, &MODMAP::mapCallback, this);
-    sub2 = n.subscribe("/btnInput", 1, &MODMAP::btnCallback, this);
     sub3 = n.subscribe("/btnInput", 1, &MODMAP::jsonCallback, this);
     sub4 = n.subscribe("/mappos", 1, &MODMAP::jsonCallback, this);
     map_pub = it.advertise("map_pgm", 1);
-    // map_pub_path = it.advertise("path_pgm", 1);
     map_pub_big = it.advertise("map_big", 1);
     file_load = n.advertise<std_msgs::String>("file_load", 1);
     pub_pgmsize = n.advertise<std_msgs::Float32MultiArray>("mapsize", 100);
-    
     ros::Rate loop_rate(10);
-    
-}
-
-void MODMAP::btnCallback(const std_msgs::String::ConstPtr &msg) // json
-{
-    std::string button = msg->data;
-    std::cout << button << std::endl;
-    if (button == "get_map")
-    {
-        std::cout << "oh yeah" << std::endl;
-        // mapPublishOnce(Mapimage);
-    }
 }
 
 void MODMAP::mapPublish(cv::Mat image)
@@ -185,21 +161,6 @@ void MODMAP::mapPublish(cv::Mat image)
 
     map_pub.publish(cv_ptr->toImageMsg());
 }
-
-// void MODMAP::mapPathPublish(cv::Mat image)
-// {
-//     ros::Time time = ros::Time::now();
-//     cv_bridge::CvImagePtr cv_ptr(new cv_bridge::CvImage);
-
-//     cv_ptr->header.frame_id = "";
-//     cv_ptr->header.seq = 1;
-//     cv_ptr->header.stamp = time;
-//     cv_ptr->encoding = "mono8";
-//     cv_ptr->image = image;
-
-//     map_pub_path.publish(cv_ptr->toImageMsg());
-// }
-
 
 void MODMAP::mapBigPublish(cv::Mat image)
 {
@@ -233,13 +194,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     int y = root["y"].asInt();
     Position = root["cv_pos"];
 
-    // std::vector<std::string> x_split = split(x_, '.');
-    // std::vector<std::string> y_split = split(y_, '.');
-
-    // map_x = std::stoi(x); //수정해야함
-    // map_y = std::stoi(y);
-    // map_width = std::stoi(width);
-    // map_height = std::stoi(height);
     float big_size, small_size, resolution, w, h;
     
     img_origin = img.clone();
@@ -247,7 +201,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     cv::Scalar red(0, 0, 255); //지우기
     cv::Scalar green(0, 255, 0);
     cv::Scalar blue(255, 0, 0); //그리기
-    std::cout << "ooooooooooooooooooooooooooooooo" << std::endl;
 
     if (img.cols >= img.rows)
     {
@@ -267,11 +220,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         h = height;
         std::cout << "second" << std::endl;
     }
-    std::cout << "zzzzzzzzzzzzzzzzzzzzzzzzzz" << std::endl;
-    
-
     std_msgs::Float32MultiArray mapsize;
-
 
     if (type == "map_draw")
     {
@@ -376,7 +325,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 }
                 if (roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
                 {
-                    std::cout << "bbbbb" << std::endl;
                     throw er;
                 }
                 
@@ -406,21 +354,17 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
     else if (type == "up" || type == "down" || type == "right" || type == "left")
     {
-
         roi_x = x;
         roi_y = y;
 
         if (roi_x >= 0 && roi_x + roi_width <= img.cols && roi_y >= 0 && roi_y + roi_height <= img.rows)
         {
-            std::cout << "roi_w : " << roi_width << std::endl;
-            std::cout << "roi_h : " << roi_height << std::endl;
             if(path_flag == true)
             {
                 path_img_roi = path_img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
                 cv::resize(path_img_roi, path_img_roi, cv::Size(400, 400));
                 mapBigPublish(path_img_roi);
             }
-
             else
             {
                 img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
@@ -430,135 +374,11 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         }
     }
 
-    if (type == "ok_line" || type == "ok_square" || type == "ok_erase" || type == "ok_arrow")
+    if (type == "ok_arrow")
     {
-        std::vector<cv::Point> pointList_line; /// vector좌표 push해서 좌표가지고 사각형 그리고, +, - 구현하기
-        std::vector<cv::Point> pointList_square;
-        std::vector<cv::Point> pointList_erase;
         std::vector<cv::Point> pointList_arrow;
-        if (type == "ok_line")
-        {
-            center.x = x;
-            center.y = y;
-            center_2.x = x + roi_width;
-            center_2.y = y;
-
-            for (int i = 1; i < 3; i++)
-            {
-                std::cout << roi_res << std::endl;
-                line.x = Position[i][0].asInt() * roi_res;
-                std::cout << line.x << std::endl;
-                line.x = line.x + x;
-                line.y = Position[i][1].asInt() * roi_res;
-                line.y = line.y + y;
-                pointList_line.push_back(line);
-            }
-
-            std::cout << "size : " << pointList_line.size() << std::endl;
-            for (int j = 1; j < pointList_line.size() + 1; j++)
-            {
-                cv::line(color_img, pointList_line[j - 1], pointList_line[j], blue);
-                j++;
-            }
-
-            for (int i = 0; i < color_img.rows; i++)
-            {
-                for (int j = 0; j < color_img.cols; j++)
-                {
-                    if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
-                    {
-                        img.at<uchar>(i, j) = 0;
-                    }
-                }
-            }
-        }
-
-        else if (type == "ok_square")
-        {
-            int square_np[] = {4};
-            cv::Point square_points[1][4];
-
-            for (int i = 1; i < 5; i++)
-            {
-                square.x = Position[i][0].asInt() * roi_res;
-                square.x += x;
-                square.y = Position[i][1].asInt() * roi_res;
-                square.y += y;
-                pointList_square.push_back(square);
-            }
-
-            square_points[0][0] = pointList_square[pointList_square.size() - 4];
-            square_points[0][1] = pointList_square[pointList_square.size() - 3];
-            square_points[0][2] = pointList_square[pointList_square.size() - 2];
-            square_points[0][3] = pointList_square[pointList_square.size() - 1];
-
-            for (int j = 1; j < pointList_square.size() + 1; j++)
-            {
-                square_j = j;
-                if (j % 4 == 0)
-                {
-                    square_j -= 4;
-                }
-                cv::line(color_img, pointList_square[j - 1], pointList_square[square_j], blue, 1);
-            }
-
-            const cv::Point *sppt[1] = {square_points[0]};
-            cv::fillPoly(color_img, sppt, square_np, 1, blue, 8);
-            for (int i = 0; i < color_img.rows; i++)
-            {
-                for (int j = 0; j < color_img.cols; j++)
-                {
-
-                    if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
-                    {
-                        img.at<uchar>(i, j) = 0;
-                    }
-                }
-            }
-        }
-        else if (type == "ok_erase")
-        {
-            int erase_np[] = {4};
-            cv::Point erase_points[1][4];
-
-            for (int i = 1; i < 5; i++)
-            {
-                erase.x = Position[i][0].asInt() * roi_res;
-                erase.x += x;
-                erase.y = Position[i][1].asInt() * roi_res;
-                erase.y += y;
-                pointList_erase.push_back(erase);
-            }
-            erase_points[0][0] = pointList_erase[pointList_erase.size() - 4];
-            erase_points[0][1] = pointList_erase[pointList_erase.size() - 3];
-            erase_points[0][2] = pointList_erase[pointList_erase.size() - 2];
-            erase_points[0][3] = pointList_erase[pointList_erase.size() - 1];
-
-            for (int j = 1; j < pointList_erase.size() + 1; j++)
-            {
-                erase_j = j;
-                if (j % 4 == 0)
-                {
-                    erase_j -= 4;
-                }
-                cv::line(color_img, pointList_erase[j - 1], pointList_erase[erase_j], red, 1);
-            }
-
-            const cv::Point *ppt[1] = {erase_points[0]};
-            cv::fillPoly(color_img, ppt, erase_np, 1, red, 8);
-            for (int i = 0; i < color_img.rows; i++)
-            {
-                for (int j = 0; j < color_img.cols; j++)
-                {
-
-                    if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
-                    {
-                        img.at<uchar>(i, j) = 255;
-                    }
-                }
-            }
-        }
-        else if (type == "ok_arrow")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+      
+        if (type == "ok_arrow")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
         {
             double line_length;
             float gradient;
@@ -571,19 +391,17 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 arrow.y = Position[i][1].asInt() * roi_res;
                 arrow.y = arrow.y + y;
                 pointList_arrow.push_back(arrow);
-                
-                
             }
-            //cv::line(path_img, pointList_arrow[0], pointList_arrow[1], red);
 
             line_length = sqrt(pow(pointList_arrow[0].x - pointList_arrow[1].x, 2) + pow(pointList_arrow[0].y - pointList_arrow[1].y, 2));
+            
             std::cout << "line length : " << line_length << std::endl;
             std::cout << "n = " << line_length/8 << std::endl;
 
             // 선 긋기
             // for (int i = 0; i <= line_length/4; i ++)
             // {
-            //     cv::line(path_img, cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/12)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/12)*i)), cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/12)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/12)*i)+10),green);
+            //     cv::line(path_img, cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/4)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/4)*i)), cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/4)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/4)*i)+10),green);
             // }
 
             for (int i = 1; i <= line_length/8; i ++)
@@ -592,33 +410,29 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 i++;
             }
             // map_file.txt에 들어갈 각도.
-            std::cout << -atan2(pointList_arrow[1].y - pointList_arrow[0].y, pointList_arrow[1].x - pointList_arrow[0].x)*180/PI << std::endl;
-
-            // gradient = (pointList_arrow[1].y - pointList_arrow[0].y)/(pointList_arrow[1].x-pointList_arrow[0].x);
-            // std::cout << "gradient : " << gradient << std::endl;
+            changedAngle = -atan2(pointList_arrow[1].y - pointList_arrow[0].y, pointList_arrow[1].x - pointList_arrow[0].x)*180/PI;
             
-            // std::cout << "first X : " << pointList_arrow[0].x << "  first Y : " << pointList_arrow[0].y << std::endl;
-            // std::cout << "second X : " << pointList_arrow[1].x << "  second Y : " << pointList_arrow[1].y << std::endl;
-            // cv::imshow("ok_arrow", path_img);
-            // cv::waitKey(0);
+            std::fstream fs_file("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
+    
+            // click coordination changes to map_file.txt coordination 
+            if (fs_file.is_open())
+            {
+                fs_file.seekg(-4, std::ios::end);
+                fs_file << "500, " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+                for (int i = 1; i < line_length/8; i++)
+                {
+                    // std::cout << (txt_point_x[i] - origin_x/map_resolution)*map_resolution + 0.02 << std::endl;
+                    // std::cout << (color_img.rows - txt_point_y[i] - origin_y/map_resolution)*map_resolution << std::endl;
 
-            // std::cout << "size : " << pointList_arrow.size() << std::endl;
-            // for (int j = 1; j < pointList_arrow.size() + 1; j++)
-            // {
-            //     cv::line(color_img, pointList_arrow[j - 1], pointList_arrow[j], blue);
-            //     j++;
-            // }
+                    fs_file << "500, " << ((pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*i)) - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - (pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*i)) - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+                }
+            }
 
-            // for (int i = 0; i < color_img.rows; i++)
-            // {
-            //     for (int j = 0; j < color_img.cols; j++)
-            //     {
-            //         if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
-            //         {
-            //             img.at<uchar>(i, j) = 0;
-            //         }
-            //     }
-            // }
+            fs_file << "500, " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+            fs_file <<"end"<<std::endl;
+    
+            fs_file.clear();
+            fs_file.close();
         }
 
         if (path_flag == true)
@@ -645,71 +459,13 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
        
     }
 
-    else if (type == "save")
-    {
-
-        status = "save";
-
-        std::cout << "fssssssssssssssssssssssssss" << std::endl;
-
-        pgm_occ.info.width = img.cols;
-        pgm_occ.info.height = img.rows;
-        pgm_occ.info.resolution = 0.025000;
-
-        for (int i = 0; i < img.rows; i++)
-        {
-
-            for (int j = 0; j < img.cols; j++)
-            {
-
-                if (color_img.at<cv::Vec3b>(i, j)[0] == 255 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 0)
-                {
-                    pgm_occ.data[img.cols * i + j] = 100;
-                }
-
-                else if (color_img.at<cv::Vec3b>(i, j)[0] == 0 && color_img.at<cv::Vec3b>(i, j)[1] == 0 && color_img.at<cv::Vec3b>(i, j)[2] == 255)
-                {
-                    pgm_occ.data[img.cols * i + j] = 0;
-                }
-            }
-        }
-
-        std::cout << "finish" << std::endl;
-
-        std::cout << directory_path << std::endl;
-        std::cout << filename << std::endl;
-        MapGenerator(directory_path, filename, threshold_occupied, threshold_free, pgm_occ);
-    
-    }
     else if (type == "path")
     {
-        std::ofstream fout;
-        std::ifstream fin;
-        fin.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
-        fout.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt", std::ios::out | std::ios::in);
-        //fout.seekp(-1,std::ios::end);
-        if(fin.is_open() && fout.is_open())
-        {
-            while(!fin.eof())
-            {
-                std::string last_sen;
-                std::getline(fin, last_sen);
-                if(last_sen == "end")
-                {
-                    std::cout<<"find end"<<std::endl;
-                }
-            }
-            fin.close();
-            fout.close();
-        }
-
-        std::cout << "tellp() : " << fout.tellp() << std::endl;
         path_flag = true;
        
         std::vector<std::string> txt_place;
         std::vector<float> angle_;
 
-       
         std::ifstream readFile;
         readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/Map1.yaml");
         if (readFile.is_open())
@@ -730,7 +486,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                         std::cout << origin_value[1] << std::endl;
 
                         origin_x = -1 * stof(origin_value[0]);
-
                         origin_y = -1 * stof(origin_value[1]);
 
                         std::cout << origin_x << std::endl;
@@ -747,6 +502,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             readFile.close();
 
             readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
+            std::cout << "1" << std::endl;
             if (readFile.is_open())
             {
                 while (!readFile.eof())
@@ -789,26 +545,11 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             {
                 int distance_val;
 
-                // int distance_Lval;
-                // int distance_Rval;
-
-               
                 txt_point_x.push_back(origin_to_mat_x + txt_value_x[i] / map_resolution);
                 txt_point_y.push_back(origin_to_mat_y - txt_value_y[i] / map_resolution);
 
-                
-
-                // txt_pointer_x.push_back(txt_point_x[i] + 9);
-                // txt_pointer_y.push_back(txt_point_y[i]);
-
                 zero_x.push_back(std::cos(angle_[i] * PI / 180) * 9 - std::sin(angle_[i] * PI / 180) * 0 + txt_point_x[i]);
                 zero_y.push_back(std::sin(angle_[i] * PI / 180) * 9 + std::cos(angle_[i] * PI / 180) * 0 + txt_point_y[i]);
-
-                // trans_Lpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * 5 + txt_point_x[i]);
-                // trans_Lpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * 5 + txt_point_y[i]);
-
-                // trans_Rpoint_x.push_back(std::cos(angle_[i] * PI / 180) * -5 - std::sin(angle_[i] * PI / 180) * -5 + txt_point_x[i]);
-                // trans_Rpoint_y.push_back(std::sin(angle_[i] * PI / 180) * -5 + std::cos(angle_[i] * PI / 180) * -5 + txt_point_y[i]);
 
                 distance_val = zero_x[i] - txt_point_x[i];
 
@@ -822,41 +563,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                     distance.push_back(txt_point_x[i] - distance_val);
                 }
 
-                // distance_Lval = trans_Lpoint_x[i] - txt_point_x[i];
-
-                // if (distance_Lval < 0)
-                // {
-                //     distance_Lval *= -1;
-                //     Ldistance.push_back(txt_point_x[i] + distance_Lval);
-                // }
-                // else
-                // {
-                //     Ldistance.push_back(txt_point_x[i] - distance_Lval);
-                // }
-
-                // distance_Rval = trans_Rpoint_x[i] - txt_point_x[i];
-
-                // if (distance_Rval < 0)
-                // {
-                //     distance_Rval *= -1;
-                //     Rdistance.push_back(txt_point_x[i] + distance_Rval);
-                // }
-                // else
-                // {
-                //     Rdistance.push_back(txt_point_x[i] - distance_Rval);
-                // }
-
                 std::string a = std::to_string(i);
 
-                
-                // std::cout << i+1 << "  x : " << txt_value_x[i] << "  y : " << txt_value_y[i] << std::endl;
-
-                // cv::Point trian_[3] = {{Ldistance[i], trans_Lpoint_y[i]}, {txt_point_x[i], txt_point_y[i]}, {Rdistance[i], trans_Rpoint_y[i]}};
-                // cv::Point *t[1] = {trian_};
-                // int tri_npts[1] = {3};
-                // cv::polylines(color_img, t, tri_npts, 1, 0, blue);
-
-                // cv::circle(color_img, cv::Point(txt_point_x[i], txt_point_y[i]), 2, green, -1);
                 cv::arrowedLine(path_img, cv::Point(txt_point_x[i], txt_point_y[i]), cv::Point(distance[i], zero_y[i]), green, 1);
 
                 //글자나오게하는 곳
@@ -867,11 +575,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 // cv::putText(color_img, a, cv::Point(txt_point_x[i] + 2, txt_point_y[i] + 2), 2, 0.4, red);
             }
             readFile.close();
+        std::cout << "5" << std::endl;
         }
         cv::circle(path_img, cv::Point(origin_to_mat_x, origin_to_mat_y), 5, green, -1);
-        //path_cp_img = path_img.clone();
-        
-        
 
         std::cout<<"mini_can_w : "<<mini_can_w <<std::endl;
         std::cout<<"mini_can_h : "<<mini_can_h <<std::endl;
@@ -879,8 +585,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         //path_cp_img = path_img(cv::Rect(0, 0, path_img.cols, path_img.rows));
         cv::resize(path_img, path_cp_img, cv::Size(mini_can_w, mini_can_h));
         // cv::arrowedLine(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), cv::Point(origin_to_mat_x + 10, origin_to_mat_y), green);
-        // cv::imshow("circle", path_cp_img);
-        // cv::waitKey(0);
+       std::cout << "6" << std::endl;
 
         mapPublish(path_cp_img);
     }
@@ -898,9 +603,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         
         // path 띄울 매트릭스 하나 만듦
         path_img = cv::imread(local_file_path, 0);
-
-        //cv::imshow("path", path_img);
-        //cv::waitKey(0);
 
         img_origin = img.clone();
         img_reset = img.clone();
@@ -931,22 +633,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         {
             ss << "success";
             std::string yaml_path = f_;
-
-            // boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
-            // boost::split(name_parsing, y_[2], boost::is_any_of("."), boost::algorithm::token_compress_on);
-            //  directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
-            // directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
             directory_path = "/home/minji/a/map_gui/src/data/CoNA/";
-            // std::cout << y_[0] << std::endl;
-            // std::cout << y_[1] << std::endl;
-            // std::cout << y_[2] << std::endl;
-            // filename = name_parsing[0];
-            // std::cout << name_parsing[0] << std::endl;
-
-            // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
-            // std::cout << y_path << std::endl;
-            // system(y_path.c_str());
-
+            
             for (int i = 0; i < img.rows; i++)
             {
 
@@ -972,12 +660,9 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         else
         {
             std::cout << "image empty !! " << std::endl;
-            // file_path = "/home/cona/data/";
             file_path = "/home/minji/a/map_gui/src/data/CoNA/";
             ss << "fail";
         }
-        // load_msg.data = ss.str();
-        // file_load.publish(load_msg);
 
         mapsize.data.push_back(w);
         mapsize.data.push_back(h);
@@ -992,81 +677,4 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
         mapPublish(img_origin);
     }
-}
-
-void MODMAP::mat2txt()
-{
-
-    
-    // ***************************************************************
-    // 이 부분을 봐야하나요.?>>..?../>??>/>..?>..?
-    // ***************************************************************
-            
-    // click coordination changes to map_file.txt coordination 
-            
-    for (int i = 0; i < txt_value_x.size(); i++)
-        {
-            // 이 0.02는 내가 임의로 넣은 값인데 왜 넣어줘야하는지 잘 모르겠지만, 이게 원래 값과 더 가까운 값이 나옴.
-
-            std::cout << txt_value_x[i] << std::endl;
-            std::cout << (txt_point_x[i] - origin_x/map_resolution)*map_resolution + 0.02 << std::endl;
-
-            std::cout << txt_value_y[i] << std::endl;
-            std::cout << (color_img.rows - txt_point_y[i] - origin_y/map_resolution)*map_resolution << std::endl;
-        }
-    // ***************************************************************
-    // ***************************************************************
-}
-
-void MODMAP::MapGenerator(std::string dir_path, const std::string &filename_, int threshold_occupied_, int threshold_free_, nav_msgs::OccupancyGrid map)
-{
-    if (threshold_occupied <= threshold_free)
-    {
-        std::cout << "threshold_free must be smaller than threshold_occupied" << std::endl;
-        return;
-    }
-
-    std::string cmd = "mkdir -p " + dir_path;
-    int system_return = std::system(cmd.c_str());
-
-    if (system_return != 0)
-        printf("system command fail %s", cmd.c_str());
-    else
-        printf("create directory %s", dir_path.c_str());
-
-    printf("Received a %d X %d map @ %.3f m/pix", map.info.width, map.info.height, map.info.resolution);
-
-    std::string mapdatafile = dir_path + filename_ + ".pgm";
-    printf("Writing map occupancy data to %s", mapdatafile.c_str());
-    FILE *out = fopen(mapdatafile.c_str(), "w");
-    if (!out)
-    {
-        printf("Couldn't save map file to %s", mapdatafile.c_str());
-        return;
-    }
-
-    fprintf(out, "P5\n# CREATOR: map_saver.cpp %.3f m/pix\n%d %d\n255\n",
-            map.info.resolution, map.info.width, map.info.height);
-    for (unsigned int y = 0; y < map.info.height; y++)
-    {
-        for (unsigned int x = 0; x < map.info.width; x++)
-        {
-            // unsigned int i = x + (map.info.height - y - 1) * map.info.width;
-            unsigned int i = y * map.info.width + x;
-            if (map.data[i] >= 0 && map.data[i] <= threshold_free_)
-            { // [0,free)
-                fputc(254, out);
-            }
-            else if (map.data[i] >= threshold_occupied_)
-            { // (occ,255]
-                fputc(000, out);
-            }
-            else
-            { // occ [0.25,0.65]
-                fputc(205, out);
-            }
-        }
-    }
-
-    fclose(out);
 }

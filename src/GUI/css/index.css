@@ -114,33 +114,6 @@ main {
     font-weight: 700;
 }
 
-#line {
-    height: 30px;
-    width: 120px;
-    font-weight: 700;
-    font-size: 17px;
-    color: #3d3d3d;
-   
-}
-
-#square {
-    height: 30px;
-    width: 120px;
-    margin-top: 20px;
-    font-weight: 700;
-    font-size: 17px;
-    color: #3d3d3d;
-}
-
-#eraser {
-    height: 30px;
-    width: 120px;
-    margin-top: 20px;
-   
-    font-weight: 700;
-    font-size: 17px;
-    color: #3d3d3d;
-}
 
 #arrow {
     height: 30px;

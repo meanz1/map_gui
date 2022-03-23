@@ -5,12 +5,12 @@
     <script type="text/javascript" src="../js/eventemitter2.js"></script>
     <script type="text/javascript" src="../js/roslib.js"></script>
     <script type="text/javascript" src="../js/ros3d.js"></script>
-    <!--<script async src="../js/opencv.js" onload="onOpenCvReady();" type="text/javascipt"></script>-->
+    
 </head>
 
 <body>
     <header>
-        <div id="title">Map Editor25</div>
+        <div id="title">Map Editor - path</div>
 
     </header>
 
@@ -42,17 +42,8 @@
             </div>
 
         </div>
-        <div id="btn">
-            
-
-            <span id="load">Load and Save</span>
-            <button id="get_map" onclick="btn_func(this.id)">Get map</button>
-            <button id="save" onclick="btn_func(this.id)">PGM Save</button>
-            <!--<button id="reset" onclick="btn_func(this.id)">Reset</button>-->
+        <div id="btn">           
             <p id="draw">Draw</p>
-            <button id="line" onclick="drawLine()">Line</button>
-            <button id="square" onclick="drawSquare()">Square</button>
-            <button id="eraser" onclick="drawErase()">Eraser</button>
             <button id="arrow" onclick="drawArrow()">Arrow</button>
             <button id="all_erase" onclick="allErase()">Display clear</button>
             <div id="map">
@@ -67,10 +58,6 @@
             var ros = new ROSLIB.Ros({
                 url: "ws://localhost:9090",
             });
-
-            // var ros = new ROSLIB.Ros({
-            //     url: 'ws://192.168.50.49:9090'
-            // });
 
             ros.on('connection', function () {
                 
@@ -155,13 +142,11 @@
             });
 
             mapimg.subscribe((m) => {
-                console.log("hell");
                 document.getElementById("mini_can_img").src = "data:image/jpg;base64," + m.data;
             });
 
             
             mapBig.subscribe((m) => {
-                console.log("pllllllz");
                 document.getElementById("canvas_img").src = "data:image/jpg;base64," + m.data;
             });
 
@@ -171,7 +156,6 @@
                 mini_can.width = m.data[0];
                 mini_can.height = m.data[1];
                 resolution = m.data[2];
-                console.log(mapsize);
             })
 
 
@@ -184,7 +168,6 @@
             }, false);
 
             function mDown(me) {
-
                 mini_can.width = miniarray[0];
                 mini_can.height = miniarray[1];
                 document.getElementById("canvas").style.zIndex = 1;
@@ -192,68 +175,6 @@
                 stX = me.offsetX; //눌렀을 때 현재 마우스 X좌표를 stX에 담음
                 stY = me.offsetY; //눌렀을 때 현재 마우스 Y좌표를 stY에 담음
                 pos[cnt] = [stX, stY];
-                if (line) {
-                    ctx.beginPath();
-                    ctx.arc(stX, stY, 4, 0, Math.PI * 2, true);
-                    ctx.fill();
-                    ctx.closePath();
-
-                    if (cnt == 2) {
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = "rgb(0, 0, 255)";
-                        ctx.beginPath();
-                        ctx.moveTo(pos[1][0], pos[1][1]);
-                        ctx.lineTo(pos[2][0], pos[2][1]);
-                        ctx.stroke();
-                        cnt = 0;
-                    }
-                }
-
-                if (square) {
-                    ctx.beginPath();
-                    ctx.arc(stX, stY, 4, 0, Math.PI * 2, true);
-                    ctx.fill();
-                    ctx.closePath();
-
-                    if (cnt == 4) {
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = "rgb(0, 0, 255)";
-                        ctx.beginPath();
-                        ctx.moveTo(pos[1][0], pos[1][1]);
-                        ctx.lineTo(pos[2][0], pos[2][1]);
-                        ctx.moveTo(pos[2][0], pos[2][1]);
-                        ctx.lineTo(pos[3][0], pos[3][1]);
-                        ctx.moveTo(pos[3][0], pos[3][1]);
-                        ctx.lineTo(pos[4][0], pos[4][1]);
-                        ctx.moveTo(pos[4][0], pos[4][1]);
-                        ctx.lineTo(pos[1][0], pos[1][1]);
-                        ctx.stroke();
-                        cnt = 0;
-                    }
-                }
-
-                if (erase) {
-                    ctx.beginPath();
-                    ctx.arc(stX, stY, 4, 0, Math.PI * 2, true);
-                    ctx.fill();
-                    ctx.closePath();
-
-                    if (cnt == 4) {
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = "rgb(255, 0, 0)";
-                        ctx.beginPath();
-                        ctx.moveTo(pos[1][0], pos[1][1]);
-                        ctx.lineTo(pos[2][0], pos[2][1]);
-                        ctx.moveTo(pos[2][0], pos[2][1]);
-                        ctx.lineTo(pos[3][0], pos[3][1]);
-                        ctx.moveTo(pos[3][0], pos[3][1]);
-                        ctx.lineTo(pos[4][0], pos[4][1]);
-                        ctx.moveTo(pos[4][0], pos[4][1]);
-                        ctx.lineTo(pos[1][0], pos[1][1]);
-                        ctx.stroke();
-                        cnt = 0;
-                    }
-                }
 
                 if(arrow) {
                     ctx.beginPath();
@@ -284,25 +205,23 @@
             }
 
 
-            function mDown_mini(me) {
-                //a = 4.5;
+            function mDown_mini(me) 
+            {
                 a = resolution * 10;
                 b = resolution * 10;
-                // 참나 이 값이 어떻게 나왔을 까; 
-                //b = 4.5;
+           
                 zoom_width = a * 4;
                 zoom_height = a * 4;
-                miniX = me.offsetX;
-
                 
+                miniX = me.offsetX;
                 miniY = me.offsetY;
 
-                console.log("X : ", miniX, " Y : ", miniY);
                 zoom_x = miniX - a * 2;
                 zoom_y = miniY - a * 2;
 
                 mini_can.width = miniarray[0];
                 mini_can.height = miniarray[1];
+
                 document.getElementById("mini_can").style.zIndex = 1;
 
                 mini_ctx.fillStyle = 'blue';
@@ -310,26 +229,26 @@
                 mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
                 mini_ctx.fill();
 
-                // mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
                 mini_ctx.strokeRect(zoom_x, zoom_y, zoom_width, zoom_height);
                 mini_ctx.closePath();
 
-
                 mapX = (miniX) / resolution;
                 mapY = (miniY) / resolution; //중심좌표
+
                 mapX = parseInt(mapX);
                 mapY = parseInt(mapY);
+
                 mapX = mapX - 20; // 왼쪽 상단좌표
                 mapY = mapY - 20;
-                console.log(mapX);
-
+ 
                 const mapMsg = {
                     type: "map_draw",
                     width: canvas.width,
                     height: canvas.height,
                     x: mapX,
                     y: mapY,
-                }
+                };
+
                 var msg_map = JSON.stringify(mapMsg)
                 var String_map = new ROSLIB.Message({
                     data: msg_map,
@@ -337,33 +256,31 @@
 
                 mapPos.publish(String_map);
                 console.log("Pub message: ", String_map);
-
             }
 
-            function plus() {
-
+            function plus() 
+            {
                 mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
-                console.log("plus");
+               
                 mini_ctx.fillStyle = 'blue';
                 mini_ctx.beginPath();
                 mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
                 mini_ctx.fill();
-
                 mini_ctx.closePath();
-                // mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
                 mini_ctx.strokeRect(zoom_x + a, zoom_y + a, zoom_width - 2 * a, zoom_height - 2 * a);
-                //mapX = mapX + 5;
-                //mapY = mapY + 5;
-
+             
                 zoom_width = zoom_width - 2 * a;
                 zoom_height = zoom_height - 2 * a;
+
                 zoom_x = zoom_x + a;
                 zoom_y = zoom_y + a;
+
                 res_x = zoom_x / resolution;
                 res_y = zoom_y / resolution;
+
                 res_x = parseInt(res_x);
                 res_y = parseInt(res_y);
-                //a += 1.7;
+ 
                 const mapMsg = {
                     type: "plus",
                     width: canvas.width,
@@ -378,34 +295,31 @@
                 });
 
                 mapPos.publish(String_map);
-                console.log("Pub message: ", String_map);
             }
 
-
-            function minus() {
-
+            function minus() 
+            {
                 mini_ctx.clearRect(0, 0, mini_can.width, mini_can.height);
                 console.log("minus");
                 mini_ctx.fillStyle = 'blue';
                 mini_ctx.beginPath();
                 mini_ctx.arc(miniX, miniY, 2, 0, Math.PI * 2, true);
                 mini_ctx.fill();
-
                 mini_ctx.closePath();
-                // mini_ctx.strokeRect(miniX - 10, miniY - 10, 20, 20);
                 mini_ctx.strokeRect(zoom_x - a, zoom_y - a, zoom_width + 2 * a, zoom_height + 2 * a);
-                zoom_width = zoom_width + 2 * a;
 
+                zoom_width = zoom_width + 2 * a;
                 zoom_height = zoom_height + 2 * a;
+
                 zoom_x = zoom_x - a;
                 zoom_y = zoom_y - a;
+
                 res_x = zoom_x / resolution;
                 res_y = zoom_y / resolution;
+
                 res_x = parseInt(res_x);
                 res_y = parseInt(res_y);
-                //mapX = mapX - 5;
-                //mapY = mapY - 5;
-                //a += 1.7;
+     
                 const mapMsg = {
                     type: "minus",
                     width: canvas.width,
@@ -420,12 +334,10 @@
                 });
 
                 mapPos.publish(String_map);
-                console.log("Pub message: ", String_map);
-                console.log("width : ", res_x + zoom_width);
-                console.log(400 / (res_x + zoom_width));
             }
 
-            function path() {
+            function path() 
+            {
                 const mapMsg = {
                     type: "path",
                     width: canvas.width,
@@ -683,104 +595,33 @@
                     });
                 }
 
-
                 mapPos.publish(String_map);
                 cnt = 0;
-                erase = false;
-                square = false;
-                line = false;
                 arrow = false;
                 document.getElementById("arrow").style.backgroundColor = "white";
-                document.getElementById("line").style.backgroundColor = "white";
-                document.getElementById("square").style.backgroundColor = "white";
-                document.getElementById("eraser").style.backgroundColor = "white";
                 document.getElementById("all_erase").style.backgroundColor = "white";
-
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                //btn_func("map_callback");
-                //btn_func("map_draw");
-
-
             }
 
-            function drawLine() {
+            function drawArrow() 
+            {
                 cnt = 0;
-                line = true;
-                square = false;
-                erase = false;
-                arrow = false;
-                document.getElementById("arrow").style.backgroundColor = "white";
-                document.getElementById("line").style.backgroundColor = "rgb(198, 185, 211)";
-                document.getElementById("square").style.backgroundColor = "white";
-                document.getElementById("eraser").style.backgroundColor = "white";
-                document.getElementById("all_erase").style.backgroundColor = "white";
-            }
+                arrow = true;
 
-            function drawSquare() {
-                cnt = 0;
-                square = true;
-                line = false;
-                erase = false;
-                arrow = false;
-                document.getElementById("arrow").style.backgroundColor = "white";
-                document.getElementById("line").style.backgroundColor = "white";
-                document.getElementById("square").style.backgroundColor = "rgb(198, 185, 211)";
-                document.getElementById("eraser").style.backgroundColor = "white";
-                document.getElementById("all_erase").style.backgroundColor = "white";
-            }
-
-            function drawErase() {
-                cnt = 0;
-                erase = true;
-                square = false;
-                line = false;
-                arrow = false;
-                document.getElementById("arrow").style.backgroundColor = "white";
-                document.getElementById("line").style.backgroundColor = "white";
-                document.getElementById("square").style.backgroundColor = "white";
-                document.getElementById("eraser").style.backgroundColor = "rgb(198, 185, 211)";
+                document.getElementById("arrow").style.backgroundColor = "rgb(198, 185, 211)";
                 document.getElementById("all_erase").style.backgroundColor = "white";
 
-                //ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
 
-            function drawArrow() {
-                    cnt = 0;
-                    erase = false;
-                    square = false;
-                    line = false;
-                    arrow = true;
-                    document.getElementById("line").style.backgroundColor = "white";
-                    document.getElementById("square").style.backgroundColor = "white";
-                    document.getElementById("eraser").style.backgroundColor = "white";
-                    document.getElementById("arrow").style.backgroundColor = "rgb(198, 185, 211)";
-                    document.getElementById("all_erase").style.backgroundColor = "white";
-
-                    //ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-
-            function allErase() {
+            function allErase() 
+            {
                 cnt = 0;
-                erase = false;
-                square = false;
-                line = false;
                 arrow = false;
+
                 document.getElementById("arrow").style.backgroundColor = "white";
-                document.getElementById("line").style.backgroundColor = "white";
-                document.getElementById("square").style.backgroundColor = "white";
-                document.getElementById("eraser").style.backgroundColor = "white";
                 document.getElementById("all_erase").style.backgroundColor = "rgb(198, 185, 211)";
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-
-            function test() {
-                square = false;
-                line = false;
-                erase = true;
-                document.getElementById("line").style.backgroundColor = "white";
-                document.getElementById("square").style.backgroundColor = "white";
-                document.getElementById("test").style.backgroundColor = "blue";
             }
 
             function btn_func(mode) {
@@ -789,27 +630,6 @@
                     name: "/btnInput",
                     messageType: "std_msgs/String",
                 });
-
-                if (mode == 'save') {
-                    console.log('save');
-                    const mapMsg = {
-                        type: "save",
-                        width: canvas.width,
-                        height: canvas.height,
-                        x: res_x,
-                        y: res_y,
-                    }
-
-                    var msg_map = JSON.stringify(mapMsg)
-                    var String_map = new ROSLIB.Message({
-                        data: msg_map,
-                    });
-
-                    mapPos.publish(String_map);
-                    console.log("Pub message: ", String_map);
-
-
-                }
 
                 if (mode == "find_file") {
                     const file_name = document.getElementById("file_path").value;
@@ -831,6 +651,7 @@
                     mapPos.publish(String_map);
                     console.log("Pub message: ", String_map);
                 }
+
                 if (mode == "map_callback") {
                     const messages = {
                         type: mode,
@@ -848,12 +669,9 @@
                     console.log("Pub message: ", String_getmap);
                 }
             }
-
-
         </script>
 
     </main>
-
 
 </body>
 
