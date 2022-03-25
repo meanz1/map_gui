@@ -99,10 +99,13 @@ class MODMAP
         std::vector<int> Ldistance;
         std::vector<int> Rdistance;
 
+        std::vector<std::string> txt_place;
+        std::vector<float> angle_;
+
         float m2pixel;
 
-        float origin_x;
-        float origin_y;
+        double origin_x;
+        double origin_y;
 
         float origin_to_mat_x;
         float origin_to_mat_y;
@@ -111,7 +114,9 @@ class MODMAP
         int b = 10;
         int roi_x, roi_y, roi_height;
         float roi_width;
-        float map_resolution = 0.025;
+        double map_resolution = 0.02500;
+
+        int file_count_n = 33;
 
         float changedAngle;
 
@@ -417,20 +422,22 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             // click coordination changes to map_file.txt coordination 
             if (fs_file.is_open())
             {
+                file_count_n += 1;
+                std::cout<< "file_count_n : " << file_count_n << std::endl;
                 fs_file.seekg(-4, std::ios::end);
-                fs_file << "500, " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+                fs_file << file_count_n << ", " << (pointList_arrow[0].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[0].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
                 for (int i = 1; i < line_length/8; i++)
                 {
                     // std::cout << (txt_point_x[i] - origin_x/map_resolution)*map_resolution + 0.02 << std::endl;
                     // std::cout << (color_img.rows - txt_point_y[i] - origin_y/map_resolution)*map_resolution << std::endl;
-
-                    fs_file << "500, " << ((pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*i)) - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - (pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*i)) - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+                    file_count_n ++;
+                    fs_file << file_count_n << ", " << ((pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*i)) - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - (pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*i)) - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
                 }
             }
 
-            fs_file << "500, " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+            fs_file << file_count_n << ", " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
             fs_file <<"end"<<std::endl;
-    
+
             fs_file.clear();
             fs_file.close();
         }
@@ -459,12 +466,50 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
        
     }
 
-    else if (type == "path")
+    else if (type == "file")
+
     {
+        std::stringstream ss;
+        // file_path += f_;
+        ss.str("");
+        std::cout << file_path << std::endl;
+        std::cout << local_file_path << std::endl;
+        img = cv::imread(local_file_path, 0);
+        color_img = cv::imread(local_file_path, 1);
+        
+        // path 띄울 매트릭스 하나 만듦
+        path_img = cv::imread(local_file_path, 0);
+        img_origin = img.clone();
+        img_reset = img.clone();
+
+        if (img.cols >= img.rows)
+        {
+            big_size = img.cols;
+            small_size = img.rows;
+            resolution = width / big_size;
+            w = width;
+            h = small_size * resolution;
+            std::cout << "first" << std::endl;
+        }
+        else
+        {
+            big_size = img.rows;
+            small_size = img.cols;
+            resolution = height / big_size;
+            w = small_size * resolution;
+            h = height;
+            std::cout << "second" << std::endl;
+        }
+
+        mini_can_h = h;
+        mini_can_w = w;
+
+        mapsize.data.push_back(w);
+        mapsize.data.push_back(h);
+        mapsize.data.push_back(resolution);
+        pub_pgmsize.publish(mapsize);
+
         path_flag = true;
-       
-        std::vector<std::string> txt_place;
-        std::vector<float> angle_;
 
         std::ifstream readFile;
         readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/Map1.yaml");
@@ -511,8 +556,12 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                     std::getline(readFile, str_txt);
                     boost::split(txt_value, str_txt, boost::is_any_of(","), boost::algorithm::token_compress_on);
 
-                    for (int i = 0; i < txt_value.size(); i++)
+                    for (int i = 0; i < txt_value.size()-1; i++)
                     {
+                        if (i % 6 == 0)
+                        {
+                            file_count_n = stoi(txt_value[i]);
+                        }
                         if (i % 6 == 1)
                         {
                             txt_value_x.push_back(stof(txt_value[i]));
@@ -540,6 +589,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                     }
                 }
             }
+
+            
 
             for (int i = 0; i < txt_value_x.size(); i++)
             {
@@ -575,106 +626,12 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 // cv::putText(color_img, a, cv::Point(txt_point_x[i] + 2, txt_point_y[i] + 2), 2, 0.4, red);
             }
             readFile.close();
-        std::cout << "5" << std::endl;
         }
         cv::circle(path_img, cv::Point(origin_to_mat_x, origin_to_mat_y), 5, green, -1);
 
-        std::cout<<"mini_can_w : "<<mini_can_w <<std::endl;
-        std::cout<<"mini_can_h : "<<mini_can_h <<std::endl;
-        
         //path_cp_img = path_img(cv::Rect(0, 0, path_img.cols, path_img.rows));
         cv::resize(path_img, path_cp_img, cv::Size(mini_can_w, mini_can_h));
         // cv::arrowedLine(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), cv::Point(origin_to_mat_x + 10, origin_to_mat_y), green);
-       std::cout << "6" << std::endl;
-
         mapPublish(path_cp_img);
-    }
-
-    else if (type == "file")
-
-    {
-        std::stringstream ss;
-        // file_path += f_;
-        ss.str("");
-        std::cout << file_path << std::endl;
-        std::cout << local_file_path << std::endl;
-        img = cv::imread(local_file_path, 0);
-        color_img = cv::imread(local_file_path, 1);
-        
-        // path 띄울 매트릭스 하나 만듦
-        path_img = cv::imread(local_file_path, 0);
-
-        img_origin = img.clone();
-        img_reset = img.clone();
-
-        if (img.cols >= img.rows)
-        {
-            big_size = img.cols;
-            small_size = img.rows;
-            resolution = width / big_size;
-            w = width;
-            h = small_size * resolution;
-            std::cout << "first" << std::endl;
-        }
-        else
-        {
-            big_size = img.rows;
-            small_size = img.cols;
-            resolution = height / big_size;
-            w = small_size * resolution;
-            h = height;
-            std::cout << "second" << std::endl;
-        }
-
-        mini_can_h = h;
-        mini_can_w = w;
-
-        if (!img.empty())
-        {
-            ss << "success";
-            std::string yaml_path = f_;
-            directory_path = "/home/minji/a/map_gui/src/data/CoNA/";
-            
-            for (int i = 0; i < img.rows; i++)
-            {
-
-                for (int j = 0; j < img.cols; j++)
-                {
-                    if (img.at<uchar>(i, j) <= 110)
-                    {
-                        pgm_occ.data.push_back(100);
-                    }
-
-                    else if (img.at<uchar>(i, j) <= 220)
-                    {
-                        pgm_occ.data.push_back(-1);
-                    }
-
-                    else
-                    {
-                        pgm_occ.data.push_back(0);
-                    }
-                }
-            }
-        }
-        else
-        {
-            std::cout << "image empty !! " << std::endl;
-            file_path = "/home/minji/a/map_gui/src/data/CoNA/";
-            ss << "fail";
-        }
-
-        mapsize.data.push_back(w);
-        mapsize.data.push_back(h);
-        mapsize.data.push_back(resolution);
-        std::cout << mapsize << std::endl;
-
-        pub_pgmsize.publish(mapsize);
-        cv::resize(img_origin, img_origin, cv::Size(w, h));
-        std::cout << resolution << std::endl;
-        std::cout << w << std::endl;
-        std::cout << h << std::endl;
-
-        mapPublish(img_origin);
     }
 }

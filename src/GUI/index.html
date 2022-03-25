@@ -336,24 +336,6 @@
                 mapPos.publish(String_map);
             }
 
-            function path() 
-            {
-                const mapMsg = {
-                    type: "path",
-                    width: canvas.width,
-                    height: canvas.height,
-                    x: res_x,
-                    y: res_y,
-                }
-
-                let msg_map = JSON.stringify(mapMsg)
-                let String_map = new ROSLIB.Message({
-                    data: msg_map,
-                });
-
-                mapPos.publish(String_map);
-            }
-
             function direction(mode) 
             {
                 let e = 0;
