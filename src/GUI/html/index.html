@@ -312,11 +312,17 @@
                 mini_ctx.strokeRect(zoom_x, zoom_y, zoom_width, zoom_height);
                 mini_ctx.closePath();
 
-
                 mapX = (miniX) / resolution;
                 mapY = (miniY) / resolution; //중심좌표
+                
+                console.log(mapX);
+                console.log(miniX);
                 mapX = parseInt(mapX);
                 mapY = parseInt(mapY);
+
+                res_x = mapX;
+                res_y = mapY;
+                
                 mapX = mapX - 20; // 왼쪽 상단좌표
                 mapY = mapY - 20;
                 console.log(mapX);

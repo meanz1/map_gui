@@ -259,7 +259,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             roi_y = y;
             roi_height = 40;
             roi_width = 40;
-
+            roi_res = roi_width / 400;
             mapBigPublish(img_roi);
         }
         catch (int er)
@@ -292,7 +292,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 img_roi = img(cv::Rect(roi_x, roi_y, roi_width, roi_height));
                 cv::resize(img_roi, img_roi, cv::Size(400, 400));
                 // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
-
+                roi_res = roi_width / 400;
                 mapBigPublish(img_roi);
                 // a += 10;
 
