@@ -207,8 +207,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         big_size = img.cols;
         small_size = img.rows;
         resolution = width / big_size;
+        std::cout << "resolution :: " << resolution << std::endl;
         w = width;
         h = small_size * resolution;
+        std::cout << " w x h :: " << w << " x " << h << std::endl;
         std::cout << "first" << std::endl;
     }
     else
@@ -216,8 +218,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         big_size = img.rows;
         small_size = img.cols;
         resolution = height / big_size;
+        std::cout << "resolution :: " << resolution << std::endl;
         w = small_size * resolution;
         h = height;
+        std::cout << " w x h :: " << w << " x " << h << std::endl;
         std::cout << "second" << std::endl;
     }
     std::cout << "zzzzzzzzzzzzzzzzzzzzzzzzzz" << std::endl;
@@ -261,6 +265,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             roi_y = y;
             roi_height = 40;
             roi_width = 40;
+            roi_res = roi_width / 400;
+            std::cout << "roi_res :: " << roi_res << std::endl;
 
             mapBigPublish(img_roi);
         }
@@ -285,7 +291,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 roi_width = roi_width - 2 * a;
                 b = 10;
                 er = 7;
-                if (roi_height < 40 || roi_width < 40 || roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
+                if (roi_height < 40 || roi_width < 40 || roi_x <= 0 || roi_y <= 0 || roi_x + roi_width > img.cols || roi_y + roi_height > img.rows)
                 {
                     minus_switch = false;
                     std::cout << "bbbbb" << std::endl;
@@ -295,10 +301,12 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 cv::resize(img_roi, img_roi, cv::Size(400, 400));
                 // cv::cvtColor(img_roi, gray, CV_GRAY2RGB);
 
-                mapBigPublish(img_roi);
                 // a += 10;
+                roi_res = roi_width / 400;
+                std::cout << "roi_x x roi_y (roi_width):: " << roi_x << " x " << roi_y << " (" << roi_width << ") " << std::endl;
+                std::cout << "plus roi_res :: " << roi_res << std::endl;
+                mapBigPublish(img_roi);
 
-                std::cout << roi_x << std::endl;
             }
             catch (int er)
             {
@@ -323,7 +331,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 {
                     minus_switch = true;
                 }
-                if (roi_x <= 0 || roi_y <= 0 || roi_x + roi_width >= img.cols || roi_y + roi_height >= img.rows)
+                if (roi_x <= 0 || roi_y <= 0 || roi_x + roi_width > img.cols || roi_y + roi_height > img.rows)
                 {
                     std::cout << "bbbbb" << std::endl;
                     throw er;
@@ -336,12 +344,10 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 //     throw er;
                 // }
 
-                std::cout << roi_x << std::endl;
-                std::cout << roi_y << std::endl;
-                std::cout << roi_width << std::endl;
+                std::cout << "roi_x x roi_y (roi_width):: " << roi_x << " x " << roi_y << " (" << roi_width << ") " << std::endl;
                 roi_res = roi_width / 400;
-
-                std::cout << 400 / roi_width << std::endl;
+                std::cout << "minus roi_res :: " << roi_res << std::endl;
+               
                 mapBigPublish(img_roi);
                 // b += 10;
             }
@@ -382,7 +388,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             center_2.x = x + roi_width;
             center_2.y = y;
 
-            for (int i = 1; i < 3; i++)
+            for (int i = 0; i < 2; i++)
             {
                 std::cout << roi_res << std::endl;
                 line.x = Position[i][0].asInt() * roi_res;
@@ -417,7 +423,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             int square_np[] = {4};
             cv::Point square_points[1][4];
 
-            for (int i = 1; i < 5; i++)
+            for (int i = 0; i < 4; i++)
             {
                 square.x = Position[i][0].asInt() * roi_res;
                 square.x += x;
@@ -460,7 +466,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             int erase_np[] = {4};
             cv::Point erase_points[1][4];
 
-            for (int i = 1; i < 5; i++)
+            for (int i = 0; i < 4; i++)
             {
                 erase.x = Position[i][0].asInt() * roi_res;
                 erase.x += x;
@@ -585,7 +591,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         //
     }
     else if (type == "file")
-
     {
 
         std::stringstream ss;
