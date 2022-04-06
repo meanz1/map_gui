@@ -73,35 +73,7 @@ class MODMAP
         std::vector<std::string> yaml;
         std::vector<std::string> origin_value;
         std::vector<std::string> name_parsing;
-        std::vector<std::string> txt_value;
-
-        std::vector<float> txt_value_x;
-        std::vector<float> txt_value_y;
-
-        std::vector<int> txt_point_x;
-        std::vector<int> txt_point_y;
-
-        // 회전 전 화살표 포인트 좌표
-
-        std::vector<int> txt_pointer_x;
-        std::vector<int> txt_pointer_y;
-
-        std::vector<int> trans_point_x;
-        std::vector<int> trans_point_y;
-
-        // (0, 0) 기준으로 해서 회전 전 좌표
-        std::vector<int> zero_x;
-        std::vector<int> zero_y;
-
-        // 기준좌표로부터 거리(y축 대칭 시켜줄거라 ㅎ)
-        std::vector<int> distance;
-
-        std::vector<int> Ldistance;
-        std::vector<int> Rdistance;
-
-        std::vector<std::string> txt_place;
-        std::vector<float> angle_;
-
+        
         float m2pixel;
 
         double origin_x;
@@ -121,7 +93,7 @@ class MODMAP
         float changedAngle;
 
         std::string status = "default";
-
+        std::string table_n;
         void initNode();
         void MapGenerator(std::string dir_path, const std::string &filename, int threshold_occupied, int threshold_free, nav_msgs::OccupancyGrid map);
         
@@ -200,6 +172,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     int x = root["x"].asInt();
     int y = root["y"].asInt();
     Position = root["cv_pos"];
+    table_n = root["table_num"].asString();
 
     float big_size, small_size, resolution, w, h;
 
@@ -341,6 +314,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     if (type == "ok_arrow")
     {
         std::vector<cv::Point> pointList_arrow;
+        int goal_putText;
         double line_length;
         float gradient;
         for (int i = 1; i < 3; i++)
@@ -363,6 +337,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         {
             cv::arrowedLine(path_img, cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*(i-1)), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*(i-1))), cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*i), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*i)), green, 1);
             i++;
+
+            goal_putText = i;
         }
         // map_file.txt에 들어갈 각도.
         changedAngle = -atan2(pointList_arrow[1].y - pointList_arrow[0].y, pointList_arrow[1].x - pointList_arrow[0].x)*180/PI;
@@ -384,8 +360,19 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 fs_file << file_count_n << ", " << ((pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*i)) - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - (pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*i)) - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
             }
         }
+        std::string final_place;
+        file_count_n++;
+        if(table_n != "none")
+        {
+            int t_num = std::stoi(table_n);
+            final_place = cv::format("table %05d", t_num);
 
-        fs_file << file_count_n << ", " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+            cv::putText(path_img, final_place, cv::Point(pointList_arrow[0].x + (int)((pointList_arrow[1].x-pointList_arrow[0].x)/(line_length/8)*goal_putText), pointList_arrow[0].y + (int)((pointList_arrow[1].y-pointList_arrow[0].y)/(line_length/8)*goal_putText)), 2, 0.4, red);       
+        }
+        else
+            final_place = table_n;
+        // fs_file << file_count_n << ", " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", none, -1;" << std::endl;
+        fs_file << file_count_n << ", " << (pointList_arrow[1].x - origin_x/map_resolution)*map_resolution + 0.02 << ", " << (color_img.rows - pointList_arrow[1].y - origin_y/map_resolution)*map_resolution << ", " << changedAngle << ", "<< final_place << ", -1;" << std::endl;
         fs_file <<"end"<<std::endl;
 
         fs_file.clear();
@@ -401,7 +388,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
     else if (type == "save")
     {
-
         status = "save";
 
         std::cout << "adding path in map_file.txt" << std::endl;
@@ -411,6 +397,36 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
     else if (type == "file")
 
     {
+
+        std::vector<std::string> txt_value;
+
+        std::vector<float> txt_value_x;
+        std::vector<float> txt_value_y;
+
+        std::vector<int> txt_point_x;
+        std::vector<int> txt_point_y;
+
+        // 회전 전 화살표 포인트 좌표
+
+        std::vector<int> txt_pointer_x;
+        std::vector<int> txt_pointer_y;
+
+        std::vector<int> trans_point_x;
+        std::vector<int> trans_point_y;
+
+        // (0, 0) 기준으로 해서 회전 전 좌표
+        std::vector<int> zero_x;
+        std::vector<int> zero_y;
+
+        // 기준좌표로부터 거리(y축 대칭 시켜줄거라 ㅎ)
+        std::vector<int> distance;
+
+        std::vector<int> Ldistance;
+        std::vector<int> Rdistance;
+
+        std::vector<std::string> txt_place;
+        std::vector<float> angle_;
+
         std::stringstream ss;
         // file_path += f_;
         ss.str("");
