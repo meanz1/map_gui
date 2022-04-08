@@ -44,8 +44,8 @@ class MODMAP
         cv::Mat img_roi, img_origin, img_reset;
         cv::Mat path_img, path_img_roi;
         cv::Mat path_cp_img;
-        std::string file_path = "/home/minji/a/map_gui/src/data/CoNA/";
-      
+        // std::string file_path = "/home/minji/a/map_gui/src/data/CoNA/";
+        std::string file_path = "/home/cona/data/";
         nav_msgs::OccupancyGrid pgm_occ;
 
         int map_width, map_height;
@@ -417,8 +417,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             // map_file.txt에 들어갈 각도.
             changedAngle = -atan2(pointList_arrow[1].y - pointList_arrow[0].y, pointList_arrow[1].x - pointList_arrow[0].x)*180/PI;
             
-            std::fstream fs_file("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
-    
+            //std::fstream fs_file("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
+            std::fstream fs_file("/home/cona/data/CoNA/Map2/map_file.txt");
             // click coordination changes to map_file.txt coordination 
             if (fs_file.is_open())
             {
@@ -512,7 +512,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         path_flag = true;
 
         std::ifstream readFile;
-        readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/Map1.yaml");
+        // readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/Map1.yaml");
+        readFile.open("/home/cona/data/CoNA/Map2/Map1.yaml");
         if (readFile.is_open())
         {
             while (!readFile.eof())
@@ -545,8 +546,8 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             std::cout << origin_to_mat_x << std::endl;
             std::cout << origin_to_mat_y << std::endl;
             readFile.close();
-
-            readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
+            // readFile.open("/home/minji/a/map_gui/src/data/CoNA/Map2/map_file.txt");
+            readFile.open("/home/cona/data/CoNA/Map2/map_file.txt");
             std::cout << "1" << std::endl;
             if (readFile.is_open())
             {
