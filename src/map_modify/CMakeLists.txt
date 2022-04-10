@@ -20,8 +20,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(OpenCV REQUIRED)
-find_package(jsoncpp CONFIG REQUIRED)
-find_library(jsoncpp_LIB NAMES libjsoncpp.a PATHS vcpkg/packages/jsoncpp_x64-linux/lib REQUIRED)
+# find_package(jsoncpp CONFIG REQUIRED)
+find_library(jsoncpp_LIB NAMES jsoncpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/src/jsoncpp/lib NO_DEFAULT_PATH)
+# find_library(jsoncpp_LIB NAMES libjsoncpp.a PATHS vcpkg/packages/jsoncpp_x64-linux/lib REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -152,15 +153,18 @@ add_executable(${PROJECT_NAME} src/map_modify.cpp)
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
-set(JSON_INC_PATH vcpkg/packages/jsoncpp_x64-osx/include)
-target_include_directories(${PROJECT_NAME} PUBLIC ${JSON_INC_PATH})
+# set(JSON_INC_PATH vcpkg/packages/jsoncpp_x64-osx/include)
+# target_include_directories(${PROJECT_NAME} PUBLIC ${JSON_INC_PATH})
 
-set(JSON_LIB_PATH vcpkg/packages/jsoncpp_x64-osx/lib)
-target_link_directories(${PROJECT_NAME} PUBLIC ${JSON_LIB_PATH})
+# set(JSON_LIB_PATH vcpkg/packages/jsoncpp_x64-osx/lib)
+# target_link_directories(${PROJECT_NAME} PUBLIC ${JSON_LIB_PATH})
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+message("jsoncpp_LIB: ${jsoncpp_LIB}")
+
 target_link_libraries(${PROJECT_NAME} 
 ${catkin_LIBRARIES}
    ${OpenCV_LIBRARIES}
