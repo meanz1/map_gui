@@ -5,7 +5,7 @@
  */
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "map_modify");
+  ros::init(argc, argv, "map_edit");
   MODMAP modmap;
   ros::spin();
   return 0;

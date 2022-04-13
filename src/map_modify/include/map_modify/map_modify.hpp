@@ -26,6 +26,7 @@
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
 #define TRUE 1
 #define FALSE 0
+#define PI 3.141592
 
 class MODMAP
 {
@@ -51,9 +52,13 @@ public:
     int threshold_occupied = 65;
     int threshold_free = 25;
     bool minus_switch = true;
+    bool path_flag = false;
     int plus_cnt = 0;
     int minus_cnt = 0;
     std_msgs::String load_msg;
+
+    int mini_can_w;
+    int mini_can_h;
 
     std::mutex mtx;
     // std::string directory_path = "/home/minji/map_gui/src/data/CoNA/";
@@ -63,7 +68,18 @@ public:
     cv::Point line, line_2, sqr, sqr_2, sqr_3, sqr_4, center, center_2, erase, square;
     std::vector<std::string> y_;
     std::vector<std::string> name_parsing;
+    std::vector<std::string> yaml;
+    std::vector<std::string> origin_value;
     float m2pixel;
+    double origin_x;
+    double origin_y;
+
+    float origin_to_mat_x;
+    float origin_to_mat_y;
+
+    double map_resolution = 0.02500;
+
+    int file_count_n = 33;
 
     int a = 10;
     int b = 10;
@@ -511,7 +527,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         // cv::waitKey(0);
     }
 
-    else if (type == "save")
+    else if (type == "save_edit")
     {
 
         status = "save";
@@ -585,30 +601,46 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         //
     }
     else if (type == "file")
-
     {
+        std::vector<std::string> txt_value;
+
+        std::vector<float> txt_value_x;
+        std::vector<float> txt_value_y;
+
+        std::vector<int> txt_point_x;
+        std::vector<int> txt_point_y;
+
+        // 회전 전 화살표 포인트 좌표
+
+        std::vector<int> txt_pointer_x;
+        std::vector<int> txt_pointer_y;
+
+        std::vector<int> trans_point_x;
+        std::vector<int> trans_point_y;
+
+        // (0, 0) 기준으로 해서 회전 전 좌표
+        std::vector<int> zero_x;
+        std::vector<int> zero_y;
+
+        // 기준좌표로부터 거리(y축 대칭 시켜줄거라 ㅎ)
+        std::vector<int> distance;
+
+        std::vector<int> Ldistance;
+        std::vector<int> Rdistance;
+
+        std::vector<std::string> txt_place;
+        std::vector<float> angle_;
 
         std::stringstream ss;
-        //file_path += f_;
+        // file_path += f_;
         ss.str("");
         std::cout << file_path << std::endl;
         std::cout << local_file_path << std::endl;
-        const char* _c_local_file_path = local_file_path.c_str();
-        FILE *file_;
-        if ((file_ = fopen(_c_local_file_path, "r")))
-        {
-            fclose(file_);
-        }
-        else
-        {
-            std::cout << "Cannot open file" << std::endl;
-            return;
-        }
-        
-        
         img = cv::imread(local_file_path, 0);
         color_img = cv::imread(local_file_path, 1);
-
+        
+        // path 띄울 매트릭스 하나 만듦
+        //path_img = cv::imread(local_file_path, 0);
         img_origin = img.clone();
         img_reset = img.clone();
 
@@ -638,7 +670,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
 
             boost::split(y_, f_, boost::is_any_of("/"), boost::algorithm::token_compress_on);
             boost::split(name_parsing, y_[2], boost::is_any_of("."), boost::algorithm::token_compress_on);
-            // directory_path = "/home/minji/map_gui/src/data/CoNA/" + y_[0] + "/";
+            
             directory_path = "/home/cona/data/" + y_[0] + "/" + y_[1] + "/";
             std::cout << y_[0] << std::endl;
             std::cout << y_[1] << std::endl;
@@ -646,31 +678,6 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             filename = name_parsing[0];
             std::cout<<name_parsing[0]<<std::endl;
             
-            // std::string y_path = "cd /home/minji/map_gui/src/data/CoNA/" + y_[0] + "/; rosrun map_server map_server Map1.yaml";
-            // std::cout << y_path << std::endl;
-            // system(y_path.c_str());
-
-            for (int i = 0; i < img.rows; i++)
-            {
-
-                for (int j = 0; j < img.cols; j++)
-                {
-                    if (img.at<uchar>(i, j) <= 110)
-                    {
-                        pgm_occ.data.push_back(100);
-                    }
-
-                    else if (img.at<uchar>(i, j) <= 220)
-                    {
-                        pgm_occ.data.push_back(-1);
-                    }
-
-                    else
-                    {
-                        pgm_occ.data.push_back(0);
-                    }
-                }
-            }
         }
         else
         {
@@ -678,22 +685,138 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             file_path = "/home/cona/data/";
             ss << "fail";
         }
-        //load_msg.data = ss.str();
-        //file_load.publish(load_msg);
+
+        mini_can_h = h;
+        mini_can_w = w;
 
         mapsize.data.push_back(w);
         mapsize.data.push_back(h);
         mapsize.data.push_back(resolution);
-        std::cout << mapsize << std::endl;
-
         pub_pgmsize.publish(mapsize);
-        cv::resize(img_origin, img_origin, cv::Size(w, h));
-        std::cout << resolution << std::endl;
-        std::cout << w << std::endl;
-        std::cout << h << std::endl;
 
+        path_flag = true;
+
+        std::ifstream readFile;
+        readFile.open(directory_path + "Map1.yaml");
+        if (readFile.is_open())
+        {
+            while (!readFile.eof())
+            {
+                std::string str;
+                std::getline(readFile, str);
+                boost::split(yaml, str, boost::is_any_of("["), boost::algorithm::token_compress_on);
+                for (int i = 0; i < yaml.size(); i++)
+                {
+                    
+                    if (yaml[i] == "origin: ")
+                    {
+                        std::cout << yaml[i + 1] << std::endl;
+                        boost::split(origin_value, yaml[i + 1], boost::is_any_of(","), boost::algorithm::token_compress_on);
+                        std::cout << origin_value[0] << std::endl;
+                        std::cout << origin_value[1] << std::endl;
+
+                        origin_x = -1 * stof(origin_value[0]);
+                        origin_y = -1 * stof(origin_value[1]);
+
+                        std::cout << origin_x << std::endl;
+                        std::cout << origin_y << std::endl;
+                    }
+                }
+            }
+
+            origin_to_mat_x = int(origin_x / map_resolution);
+            origin_to_mat_y = color_img.rows - int(origin_y / map_resolution);
+
+            std::cout << origin_to_mat_x << std::endl;
+            std::cout << origin_to_mat_y << std::endl;
+            readFile.close();
+
+            readFile.open(directory_path + "map_file.txt");
+            std::cout << "1" << std::endl;
+            if (readFile.is_open())
+            {
+                while (!readFile.eof())
+                {
+                    std::string str_txt;
+                    std::getline(readFile, str_txt);
+                    boost::split(txt_value, str_txt, boost::is_any_of(","), boost::algorithm::token_compress_on);
+
+                    for (int i = 0; i < txt_value.size()-1; i++)
+                    {
+                        if (i % 6 == 0)
+                        {
+                            file_count_n = stoi(txt_value[i]);
+                        }
+                        if (i % 6 == 1)
+                        {
+                            txt_value_x.push_back(stof(txt_value[i]));
+                        }
+                        else if (i % 6 == 2)
+                        {
+                            txt_value_y.push_back(stof(txt_value[i]));
+                        }
+                        if (i % 6 == 3)
+                        {
+
+                            if (stof(txt_value[i]) < 0)
+                            {
+                                angle_.push_back(360 + stof(txt_value[i]));
+                            }
+                            else
+                            {
+                                angle_.push_back(stof(txt_value[i]));
+                            }
+                        }
+                        if (i % 6 == 4)
+                        {
+                            txt_place.push_back(txt_value[i]);
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < txt_value_x.size(); i++)
+            {
+                int distance_val;
+
+                txt_point_x.push_back(origin_to_mat_x + txt_value_x[i] / map_resolution);
+                txt_point_y.push_back(origin_to_mat_y - txt_value_y[i] / map_resolution);
+
+                zero_x.push_back(std::cos(angle_[i] * PI / 180) * 9 - std::sin(angle_[i] * PI / 180) * 0 + txt_point_x[i]);
+                zero_y.push_back(std::sin(angle_[i] * PI / 180) * 9 + std::cos(angle_[i] * PI / 180) * 0 + txt_point_y[i]);
+
+                distance_val = zero_x[i] - txt_point_x[i];
+
+                if (distance_val < 0)
+                {
+                    distance_val *= -1;
+                    distance.push_back(txt_point_x[i] + distance_val);
+                }
+                else
+                {
+                    distance.push_back(txt_point_x[i] - distance_val);
+                }
+
+                std::string a = std::to_string(i);
+
+                cv::arrowedLine(img, cv::Point(txt_point_x[i], txt_point_y[i]), cv::Point(distance[i], zero_y[i]), green, 1);
+
+                //글자나오게하는 곳
+                if (txt_place[i] != " none")
+                {
+                    cv::putText(img, txt_place[i], cv::Point(txt_point_x[i] + 7, txt_point_y[i] - 4), 2, 0.4, red);
+                }
+                // cv::putText(color_img, a, cv::Point(txt_point_x[i] + 2, txt_point_y[i] + 2), 2, 0.4, red);
+            }
+            readFile.close();
+        }
+        cv::circle(img, cv::Point(origin_to_mat_x, origin_to_mat_y), 5, green, -1);
+
+        //path_cp_img = path_img(cv::Rect(0, 0, path_img.cols, path_img.rows));
+        cv::resize(img, img_origin, cv::Size(mini_can_w, mini_can_h));
+        // cv::arrowedLine(color_img, cv::Point(origin_to_mat_x, origin_to_mat_y), cv::Point(origin_to_mat_x + 10, origin_to_mat_y), green);
         mapPublish(img_origin);
-    }
+    } 
 }
 // void MODMAP::mapCallback(nav_msgs::OccupancyGridConstPtr map)
 // {
