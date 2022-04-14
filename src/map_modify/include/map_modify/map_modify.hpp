@@ -542,7 +542,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
         pgm_occ.info.width = img.cols;
         pgm_occ.info.height = img.rows;
         pgm_occ.info.resolution = 0.025000;
-
+        std::cout << "wwwwwwwwwwwwwwwwwssssssssss" << std::endl;
         // for (int i = 0; i < img.cols; i++)
         // {
 
@@ -591,7 +591,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 }
             }
         }
-
+        std::cout << "w333s" << std::endl;
         // occ_pub.publish(pgm_occ);
         std::cout << "finish" << std::endl;
 
@@ -678,6 +678,27 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
             filename = name_parsing[0];
             std::cout<<name_parsing[0]<<std::endl;
             
+            for (int i = 0; i < img.rows; i++)
+            {
+
+                for (int j = 0; j < img.cols; j++)
+                {
+                    if (img.at<uchar>(i, j) <= 110)
+                    {
+                        pgm_occ.data.push_back(100);
+                    }
+
+                    else if (img.at<uchar>(i, j) <= 220)
+                    {
+                        pgm_occ.data.push_back(-1);
+                    }
+
+                    else
+                    {
+                        pgm_occ.data.push_back(0);
+                    }
+                }
+            }
         }
         else
         {
