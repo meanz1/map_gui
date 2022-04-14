@@ -821,7 +821,7 @@ void MODMAP::jsonCallback(const std_msgs::String::ConstPtr &msg)
                 std::string a = std::to_string(i);
 
                 cv::arrowedLine(img, cv::Point(txt_point_x[i], txt_point_y[i]), cv::Point(distance[i], zero_y[i]), green, 1);
-
+                cv::circle(img, cv::Point(txt_point_x[i], txt_point_y[i]), 12, green, -1);
                 //글자나오게하는 곳
                 if (txt_place[i] != " none")
                 {
